@@ -1,13 +1,13 @@
-(ns lethal-injection.corpus
+(ns hangman.corpus
   (:refer-clojure :exclude [])
   (:require [iota])
   (:require [clojure.pprint :as pp])
   (:require [clojure.string :as str])
   (:require [clojure.core.reducers :as r])
   (:require [clojure.tools.logging :as log])
-  (:require [lethal-injection.util  :as util])
-  (:require [lethal-injection.bitop :as bitop])
-  (:use     [lethal-injection.util :only [defdynamic]])
+  (:require [hangman.util  :as util])
+  (:require [hangman.bitop :as bitop])
+  (:use     [hangman.util :only [defdynamic]])
   (:import  [clojure.lang Indexed]))
 
 
@@ -104,9 +104,9 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Examples
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; (with-corpus []
 ;;   (word-count *corpus*))

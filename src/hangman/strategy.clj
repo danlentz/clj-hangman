@@ -1,17 +1,17 @@
-(ns lethal-injection.strategy
+(ns hangman.strategy
   (:refer-clojure :exclude [])
   (:require [clojure.pprint :as pp])
   (:require [clojure.string :as str])
   (:require [clojure.core.reducers :as r])
   (:require [clojure.tools.logging :as log])
-  (:require [lethal-injection.util  :as util])
-  (:require [lethal-injection.bitop :as bitop])
-  (:use     [lethal-injection.util :only [returning returning-bind indexed]])
-  (:use     [lethal-injection.corpus])
-  (:use     [lethal-injection.inverted])
-  (:use     [lethal-injection.game])
+  (:require [hangman.util  :as util])
+  (:require [hangman.bitop :as bitop])
+  (:use     [hangman.util :only [returning returning-bind indexed]])
+  (:use     [hangman.corpus])
+  (:use     [hangman.inverted])
+  (:use     [hangman.game])
   (:use     [print.foo])
-  (:import  [lethal_injection.game LetterGuess WordGuess])
+  (:import  [hangman.game LetterGuess WordGuess])
   )
 
 

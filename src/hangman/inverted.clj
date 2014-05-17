@@ -1,27 +1,26 @@
-(ns lethal-injection.inverted
+2(ns hangman.inverted
   (:refer-clojure :exclude [])
   (:require [clojure.pprint :as pp])
   (:require [clojure.string :as str])
   (:require [clojure.core.reducers :as r])
   (:require [clojure.tools.logging :as log])
-  (:require [lethal-injection.util  :as util])
-  (:require [lethal-injection.bitop :as bitop])
-  (:use     [lethal-injection.util :only [returning returning-bind indexed]])
-  (:use     [lethal-injection.corpus])
+  (:require [hangman.util  :as util])
+  (:require [hangman.bitop :as bitop])
+  (:use     [hangman.util :only [returning returning-bind indexed]])
+  (:use     [hangman.corpus])
   (:use     [print.foo]))
  
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Search Terms
 ;;
 ;; Search terms are the individual elements to be managed by an inverted index.
-;; In a normal sense, these are typically words to be searched for in some domain
-;; of textual data -- web pages for example.  We use the same concept, but in our
-;; hangman game we are interested in individual letters to be found within
-;; words, rather than words within a page. So, in our case, we define search
-;; terms to be the set of letters that may possibly occur within a word.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; In a normal sense, these are typically words to be searched for in some 
+;; domain of textual data -- web pages for example.  We use the same concept,
+;; but in our hangman game we are interested in individual letters to be found
+;; within words, rather than words within a page. So, in our case, we define
+;; search terms to be the set of letters that may possibly occur within a word.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def +search-terms+ (.getBytes "ABCDEFGHIJKLMNOPQRSTUVWXYZ*_ ?\u0000"))
 
@@ -95,9 +94,9 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Exclusionary Index
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn build-exclusionary-index [words]
   (loop [w   (seq words)
@@ -128,9 +127,9 @@
 
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Term Frequency Distribution
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn term-frequency-distribution [words]
   (with-local-vars [newspace (transient {})]
@@ -152,9 +151,9 @@
                    (map #(conj % (pp/cl-format nil "~6,2f" (/ (second %) tot 0.01)))
                      (seq (term-frequency-distribution words)))))))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Inverted Index
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
 (defn make-inverted-set []
   (long-array (count (all-terms)) 0))
@@ -198,9 +197,9 @@
 
     
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Examples
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; (word-terms-bits "")    => 0
 ;; (word-terms-bits "A")   => 1
