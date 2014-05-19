@@ -163,12 +163,6 @@
   (unchecked-long num))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; "Byte Vectors" implement a collection of primitive signed and unsigned byte
-;; values cast appropriately from the JVM native (signed) two's complement
-;; representation.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (defn long-to-octets
   "convert a long into a sequence of minimum PAD-COUNT unsigned values.
   The zeroes are padded to the msb"
@@ -183,7 +177,6 @@
              value-bytes)))))
 
 
-
 (defn assemble-bytes [v]
   (reduce (fn
             ([] 0)
@@ -191,72 +184,3 @@
     (util/indexed (reverse v))))
 
 
-
-
-
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Subject to Rewrite
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(comment 
-(defn sbvec [thing]
-  (cond
-   (= (type thing) Long) (into (vector-of :byte)
-                               (map unchecked-byte (long-to-octets thing)))
-   (coll? thing)         (into (vector-of :byte)
-                               (map unchecked-byte thing))))
-
-(defn sbvector [& args]
-  (sbvec args))
-
-(defn make-sbvector [length initial-element]
-  (sbvec (loop [len length v []]
-         (if (<= len 0)
-           v
-           (recur (- len 1) (cons (unchecked-byte initial-element) v))))))
-    
-(defn ubvec [thing]
-  (cond
-   (= (type thing) Long) (into (vector-of :short)
-                               (map unchecked-short (long-to-octets thing)))
-   (coll? thing)         (into (vector-of :short)
-                               (map unchecked-short thing))))
-
-(defn ubvector [& args]
-  (ubvec args))
-
-(defn make-ubvector [length initial-element]
-  (ubvec (loop [len length v []]
-           (if (<= len 0)
-             v
-             (recur (- len 1) (cons (short initial-element) v))))))
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Hexadecimal String Representation 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn octet-hex [num]
-  (str
-    (+hex-chars+ (bit-shift-right num 4))  
-    (+hex-chars+ (bit-and 0x0F num))))
- 
-(defn hex [thing]
-  (cond
-    (and (number? thing) (<  thing 0))     (hex (ubvec thing))
-    (and (number? thing) (>=  thing 0 ))  (hex (ubvec thing))
-    (coll? thing)   (apply str (into [] (map octet-hex thing)))))
-
-(defn hex-str [s]
-  (hex (.getBytes s)))
-
-(defn unhex [s]
-  (unchecked-long (read-string (str "0x" s))))
-
-(defn unhex-str [s]
-  (apply str (map char (unhex s))))
-)
