@@ -15,25 +15,32 @@
 
   
 
-(defn play [strategy-name]
-  (with-corpus []
-    (loop [g (new-game (random-word *corpus*) 5)
-           s (make-strategy strategy-name g)]
-      (if-not (= :keep-guessing (.gameStatus g))
-        g
-        (let [x (.nextGuess s g)]
-          (prn g)
-          (prn x)
-          (.makeGuess x g)
-          (prn g)
-          (prn)
-          (recur g (.updateStrategy s g x)))))))
+(defn play
+  ([strategy-name] (play strategy-name 1))
+  ([strategy-name iter]
+     (with-corpus []
+       (apply +
+         (repeatedly iter
+           #(.currentScore 
+              (loop [g (new-game (random-word *corpus*) 5)
+                     s (make-strategy strategy-name g)]
+                (if-not (= :keep-guessing (.gameStatus g))
+                  g
+                  (let [x (.nextGuess s g)]
+                    (prn g)
+                    (prn x)
+                    (.makeGuess x g)
+                    (prn g)
+                    (prn)
+                    (recur g (.updateStrategy s g x)))))))))))
 
 
+;; (util/with-timing (play :frequency 1000))
+;;  => [9402 2432927.496]
 
-;; (apply + (repeatedly 1000
-;;            #(.currentScore (play :frequency))))
-;;  => 9227
+;; (util/with-timing (play :frequency 1000))
+;;  => [8763 2760980.378]
+
 
 ;; (apply + (repeatedly 1000
 ;;            #(.currentScore (play :random))))
