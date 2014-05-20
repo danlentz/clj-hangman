@@ -20,46 +20,28 @@ design that will accomodate "pluggable" strategies in order to support
 comparitive exploration of various computer models that play the game
 autonomously. 
 
-The score for a word will be:
+The score for a word will be the number of letter guesses + the
+number of incorrect word guesses if the correct word is guessed
+without exceeding the specified maximum wrong guess limit 
 
-   # letter guesses + # number of incorrect word guesses if you
-     guessed the word right before exceeding maxWrongGuesses incorrect
-     guesses
+*or*
 
-or
+25 if the game is lost before guessing the word correctly.
 
-   25 if you lost the game before guessing the word correctly.
-
-You will need to write an implementation of the GuessingStrategy
-interface and some code to use your GuessingStrategy on a HangmanGame
+The code must include an implementation of the ```GuessingStrategy```
+interface and also use your GuessingStrategy on a ```HangmanGame```
 instance.
 
-The pseudocode to run your strategy for a HangmanGame is:
+The pseudocode for a HangmanGame is:
 
 
-
-// runs your strategy for the given game, then returns the score
-
-
-public int run(HangmanGame game, GuessingStrategy strategy) {
-
-
-  while (game has not been won or lost) {
-
-
-    ask the strategy for the next guess
-
-
-    apply the next guess to the game
-
-
-  }
-
-
-  return game.score();
-
-
-}
+    public int run(HangmanGame game, GuessingStrategy strategy) {
+      while (game has not been won or lost) {
+        ask the strategy for the next guess
+        apply the next guess to the game
+      }
+      return game.score();
+    }
 
 A trivial strategy might be to guess 'A', then 'B', then 'C',
 etc. until you've guessed every letter in the word (this will work
