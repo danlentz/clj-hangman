@@ -48,97 +48,39 @@ is _FACTUAL_.  Here is what a series of calls might look like:
 
     // secret word is factual, 4 wrong guesses are allowed
     HangmanGame game = new HangmanGame("factual", 4); 
+	System.out.println(game);
 
+	new GuessLetter('a').makeGuess(game);
+	System.out.println(game);
 
+	new GuessWord("natural").makeGuess(game);
+	System.out.println(game);
 
-System.out.println(game);
+	new GuessLetter('x').makeGuess(game);
+	System.out.println(game);
 
+	new GuessLetter('u').makeGuess(game);
+	System.out.println(game);
 
-new GuessLetter('a').makeGuess(game);
+	new GuessLetter('l').makeGuess(game);
+	System.out.println(game);
 
+	new GuessWord("factual").makeGuess(game);
+	System.out.println(game);
 
-System.out.println(game);
-
-
-new GuessWord("natural").makeGuess(game);
-
-
-System.out.println(game);
-
-
-new GuessLetter('x').makeGuess(game);
-
-
-System.out.println(game);
-
-
-new GuessLetter('u').makeGuess(game);
-
-
-System.out.println(game);
-
-
-new GuessLetter('l').makeGuess(game);
-
-
-System.out.println(game);
-
-
-new GuessWord("factual").makeGuess(game);
-
-
-System.out.println(game);
 
 The output would be:
 
+	-------; score=0; status=KEEP_GUESSING
+	-A---A-; score=1; status=KEEP_GUESSING
+	-A---A-; score=2; status=KEEP_GUESSING
+	-A---A-; score=3; status=KEEP_GUESSING
+	-A--UA-; score=4; status=KEEP_GUESSING
+	-A--UAL; score=5; status=KEEP_GUESSING
+	FACTUAL; score=5; status=GAME_WON
 
-
--------; score=0; status=KEEP_GUESSING
-
-
--A---A-; score=1; status=KEEP_GUESSING
-
-
--A---A-; score=2; status=KEEP_GUESSING
-
-
--A---A-; score=3; status=KEEP_GUESSING
-
-
--A--UA-; score=4; status=KEEP_GUESSING
-
-
--A--UAL; score=5; status=KEEP_GUESSING
-
-
-FACTUAL; score=5; status=GAME_WON
-
-game.score() will be 5 in this case since there were 4 letter guesses
+```game.score()``` would be 5 in this case since there were 4 letter guesses
 and 1 incorrect word guess made.
-
-Sample Data
-
-As a baseline, here are scores for a reasonably good guessing strategy
-against a set of 15 random words. Your strategy will likely be better
-for some of the words and worse for other words, but the average
-score/word should be in the same ballpark.
-
-COMAKER = 25 (was not able to guess the word before making more than 5 mistakes)
-CUMULATE = 9
-ERUPTIVE = 5
-FACTUAL = 9
-MONADISM = 8
-MUS = 25 (was not able to guess the word before making more than 5 mistakes)
-NAGGING = 7
-OSES = 5
-REMEMBERED = 5
-SPODUMENES = 4
-STEREOISOMERS = 2
-TOXICS = 11
-TRICHROMATS = 5
-TRIOSE = 5
-UNIFORMED = 5
-
 
 
 ## Motivation
