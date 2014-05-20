@@ -22,10 +22,7 @@ autonomously.
 
 The score for a word will be the number of letter guesses + the
 number of incorrect word guesses if the correct word is guessed
-without exceeding the specified maximum wrong guess limit 
-
-*or*
-
+without exceeding the specified maximum wrong guess limit *or*
 25 if the game is lost before guessing the word correctly.
 
 The code must include an implementation of the ```GuessingStrategy```
