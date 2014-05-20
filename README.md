@@ -46,25 +46,20 @@ etc. until you've guessed every letter in the word (this will work
 great for "cab"!) or you've lost.  For example, let's say the word
 is _FACTUAL_.  Here is what a series of calls might look like:
 
+
     // secret word is factual, 4 wrong guesses are allowed
     HangmanGame game = new HangmanGame("factual", 4); 
 	System.out.println(game);
-
 	new GuessLetter('a').makeGuess(game);
 	System.out.println(game);
-
 	new GuessWord("natural").makeGuess(game);
 	System.out.println(game);
-
 	new GuessLetter('x').makeGuess(game);
 	System.out.println(game);
-
 	new GuessLetter('u').makeGuess(game);
 	System.out.println(game);
-
 	new GuessLetter('l').makeGuess(game);
 	System.out.println(game);
-
 	new GuessWord("factual").makeGuess(game);
 	System.out.println(game);
 
