@@ -18,7 +18,8 @@ The goal is to use a provided API to play Hangman effectively and
 efficiently. In particular, it is important to implement a modular
 design that will accomodate "pluggable" strategies in order to support
 comparitive exploration of various computer models that play the game
-autonomously. 
+autonomously. Every word will be an entry found in a given text
+file database of all possible words, ```words.txt```.
 
 The score for a word will be the number of letter guesses + the
 number of incorrect word guesses if the correct word is guessed
@@ -42,20 +43,12 @@ The pseudocode for a ```HangmanGame``` is:
 
 A trivial strategy might be to guess 'A', then 'B', then 'C',
 etc. until you've guessed every letter in the word (this will work
-great for "cab"!) or you've lost.
+great for "cab"!) or you've lost.  For example, let's say the word
+is _FACTUAL_.  Here is what a series of calls might look like:
 
-Every word you encounter will be a word from the words.txt file.
+    // secret word is factual, 4 wrong guesses are allowed
+    HangmanGame game = new HangmanGame("factual", 4); 
 
-Example
-
-For example, let's say the word is FACTUAL.
-
-Here is what a series of calls might look like:
-
-
-
-HangmanGame game = new HangmanGame("factual", 4); // secret word is
-factual, 4 wrong guesses are allowed
 
 
 System.out.println(game);
@@ -153,6 +146,38 @@ UNIFORMED = 5
 ## Architecture
 
 ### Corpus
+
+
+	+--------------------------+
+	| Word Length | Occurances |
+	|-------------+------------|
+	|           2 |         96 |
+	|           3 |        978 |
+	|           4 |       3919 |
+	|           5 |       8672 |
+	|           6 |      15290 |
+	|           7 |      23208 |
+	|           8 |      28558 |
+	|           9 |      25011 |
+	|          10 |      20404 |
+	|          11 |      15581 |
+	|          12 |      11382 |
+	|          13 |       7835 |
+	|          14 |       5134 |
+	|          15 |       3198 |
+	|          16 |       1938 |
+	|          17 |       1125 |
+	|          18 |        594 |
+	|          19 |        328 |
+	|          20 |        159 |
+	|          21 |         62 |
+	|          22 |         29 |
+	|          23 |         13 |
+	|          24 |          9 |
+	|          25 |          2 |
+	|          27 |          2 |
+	|          28 |          1 |
+	+--------------------------+
 
 ### Index
 
