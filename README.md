@@ -1,34 +1,26 @@
-clj-hangman
-===========
+# CLJ-HANGMAN
 
-## Overview
+Hangman is a word-guessing game with origins that go back as far as
+the Victorian era.  The word to guess is represented by a row of
+dashes, giving the number of letters it contains. If the guessing
+player suggests a letter or number which occurs in the word, the other
+player writes it in all its correct positions. If the suggested letter
+or number does not occur in the word, the other player draws one
+element of the hanged man stick figure as a tally mark. The game is
+over when either the guessing player exceeds a given number of
+incorrect guesses, typically 5, or when all of the letters have been
+guessed correctly.
 
-The word to guess is represented by a row of dashes, giving the number
-of letters, numbers and category. If the guessing player suggests a
-letter or number which occurs in the word, the other player writes it
-in all its correct positions. If the suggested letter or number does
-not occur in the word, the other player draws one element of the
-hanged man stick figure as a tally mark. The game is over when:
+## Goal
 
-An example game in progress; the answer is Wikipedia.
-The guessing player completes the word, or guesses the whole word correctly
-Your goal is to use a provided API to play Hangman efficiently. You
-need to guess a word using as few guesses as possible, and make no
-more than maxWrongGuesses incorrect guesses. You are writing the
-letter/word guessing strategy.
 
-We would like you to use the provided Java APIs and to write your
-solution in Java or a JVM-based language. However, if are not
-comfortable with that, please feel free to use any other reasonably
-mainstream programming language (C++, Python, Ruby, etc.). If you do
-use another language, please make sure that your program can accept a
-dictionary file and a list of test words (that are in the
-dictionary). The output of the program should be a score for each test
-word and the average score across all test words. Also, if you don't
-use Java, please provide build instructions if they are not
-straightforward.
+The goal is to use a provided API to play Hangman effectively and
+efficiently. In particular, it is important to implement a modular
+design that will accomodate "pluggable" strategies in order to support
+comparitive exploration of various computer models that play the game
+autonomously. 
 
-Your score for a word will be:
+The score for a word will be:
 
    # letter guesses + # number of incorrect word guesses if you
      guessed the word right before exceeding maxWrongGuesses incorrect
