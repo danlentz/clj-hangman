@@ -26,10 +26,10 @@ without exceeding the specified maximum wrong guess limit *or*
 25 if the game is lost before guessing the word correctly.
 
 The code must include an implementation of the ```GuessingStrategy```
-interface and also use your GuessingStrategy on a ```HangmanGame```
+interface and also use that GuessingStrategy on a ```HangmanGame```
 instance.
 
-The pseudocode for a HangmanGame is:
+The pseudocode for a ```HangmanGame``` is:
 
 
     public int run(HangmanGame game, GuessingStrategy strategy) {
