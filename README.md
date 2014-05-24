@@ -85,6 +85,9 @@ and 1 incorrect word guess made.
 ### Corpus
 
 
+The provided corpus includes words with the following distribution of
+lengths.
+
 	+--------------------------+
 	| Word Length | Occurances |
 	|-------------+------------|
@@ -117,6 +120,114 @@ and 1 incorrect word guess made.
 	+--------------------------+
 
 ### Index
+
+There are two different types of indices used to narrow the selection
+of word possibilities for the two distinct cases that may occur for
+each letter guess:  either the guess is _incorrect_ and that letter
+occurs _nowhere_ in that word, or the guess is _correct_ and the
+letter occurs at some designated positiions.
+
+#### Exclusionary Index
+
+The simpler case is that in which a letter occurs nowhere within a
+given word.  Such a case represents a binary condition -- either
+present or not.  
+
+	;; (word-terms-bits "")    => 0
+	;; (word-terms-bits "A")   => 1
+	;; (word-terms-bits "B")   => 2
+	;; (word-terms-bits "C")   => 4
+	;; (word-terms-bits "ABC") => 7
+	;; (word-terms-bits "D")   => 8
+	;; (word-terms-bits "AD")  => 9
+
+
+
+	;; (repeatedly 3 #(with-corpus []
+	;;                  (let [w (random-word *corpus*)]
+	;;                   [w (word-terms-vector w)])))
+	;;
+	;; => (["MULTICAR"  413128610945285]
+	;;     ["IDEALIZER" 311037270296857]
+	;;     ["KOUMISSES" 353557414171920])
+
+	;; (with-corpus []
+	;;   (seq (map terms-vector-word
+	;;          [413128610945285 311037270296857 353557414171920])))
+	;;
+	;;  => ("MULTICAR" "IDEALIZER" "KOUMISSES")
+
+
+	;; (let [c (make-corpus)]
+	;;   (pp-terms-vectors c (exclude-terms c (random-words c 5) \a)))
+	;;
+	;; [        WORD                        | ^@? _*ZYXWVUTSRQPONMLKJIHGFEDCBA
+	;;  ----------------------------------------------------------------------
+	;; [STRUGGLES                           | 00000000000111100000100001010000
+	;; [BYWORDS                             | 00000001010001100100000000001010
+	;; [WHICKERS                            | 00000000010001100000010110010100
+
+
+	;; (let [c (make-corpus)]
+	;;   (pp-terms-vectors c (exclude-terms c (random-words c 50) \a \e)))
+	;;
+	;; [        WORD                        | ^@? _*ZYXWVUTSRQPONMLKJIHGFEDCBA
+	;;  ----------------------------------------------------------------------
+	;; [SURMOUNT                            | 00000000000111100111000000000000
+	;; [VOLVULUS                            | 00000000001101000100100000000000
+	;; [FOUR                                | 00000000000100100100000000100000
+	;; [SPOOKING                            | 00000000000001001110010101000000
+	;; [BULGY                               | 00000001000100000000100001000010
+	;; [IMPUDICITY                          | 00000001000110001001000100001100
+
+
+	;; (with-corpus []
+	;;   (words-excluding-terms (random-words *corpus* 5) \a))
+	;;
+	;;  => ("REPROOF")
+	;;  => ("VERISMO" "QUELLED" "PREEMPTIVELY")
+	;;  => ("FORETOKENED")
+	;;  => ("FEMES" "CONTINGENCY")
+
+
+	;; (with-corpus []
+	;;   (term-frequency-distribution (random-words *corpus* 5)))
+	;;
+	;;   => {\A 1, \B 1, \C 4, \D 1, \E 4, \I 2, \L 3, \M 1, \N 3,
+	;;       \O 2, \R 1, \S 5, \T 1, \U 2, \V 1, \W 1, \Y 2}
+
+
+	;; (with-corpus []
+	;;   (pp-term-distribution))
+	;;
+	;; | Term | Words Occurred |      % |
+	;; |------+----------------+--------|
+	;; |    E |         121433 |  69.98 |
+	;; |    S |         104351 |  60.13 |
+	;; |    I |         102392 |  59.01 |
+	;; |    A |          94264 |  54.32 |
+	;; |    R |          91066 |  52.48 |
+	;; |    N |          84485 |  48.69 |
+	;; |    T |          83631 |  48.19 |
+	;; |    O |          79663 |  45.91 |
+	;; |    L |          68795 |  39.64 |
+	;; |    C |          55344 |  31.89 |
+	;; |    D |          47219 |  27.21 |
+	;; |    U |          46733 |  26.93 |
+	;; |    P |          40740 |  23.48 |
+	;; |    M |          39869 |  22.98 |
+	;; |    G |          38262 |  22.05 |
+	;; |    H |          33656 |  19.40 |
+	;; |    B |          26736 |  15.41 |
+	;; |    Y |          24540 |  14.14 |
+	;; |    F |          17358 |  10.00 |
+	;; |    V |          14844 |   8.55 |
+	;; |    K |          12757 |   7.35 |
+	;; |    W |          11310 |   6.52 |
+	;; |    Z |           7079 |   4.08 |
+	;; |    X |           4607 |   2.65 |
+	;; |    Q |           2541 |   1.46 |
+	;; |    J |           2467 |   1.42 |
 
 ### Strategy
 
