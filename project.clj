@@ -10,6 +10,7 @@
                  [org.codehaus.jsr166-mirror/jsr166y "1.7.0"] 
                  [immutable-bitset                   "0.1.6"]
                  [primitive-math                     "0.1.3"]
+                 [clj-tuple                          "0.1.5"]
                  [iota                               "1.1.2"]
                  [print-foo                          "0.5.1"]
                  [org.clojure/tools.logging          "0.2.6"]])

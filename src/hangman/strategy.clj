@@ -11,8 +11,7 @@
   (:use     [hangman.inverted])
   (:use     [hangman.game])
   (:use     [print.foo])
-  (:import  [hangman.game LetterGuess WordGuess])
-  )
+  (:import  [hangman.game LetterGuess WordGuess]))
 
 
 (definterface Strategem

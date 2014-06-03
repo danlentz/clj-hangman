@@ -77,10 +77,85 @@ The output would be:
 ```game.score()``` would be 5 in this case since there were 4 letter guesses
 and 1 incorrect word guess made.
 
-
 ## Motivation
 
+In the abstract, this problem is to create a framework for playing
+hangman with support for employment of various "pluggable" strategies
+which an end-user may implement.  Rather than approach this project
+with the objective of achieving the most optimized performance for one
+given strategy, we approach with a slightly different motiovation:
+support the most expressive, extensible, and generalized ability to
+define arbitrarily complex strategies, while remaining relatively
+efficient.
+
 ## Architecture
+
+This solution is based on the notion of a _tuple store_ with a
+_generalized query_ interface called a _Graph_.  The information in a
+Graph is encoded as a series of assertions of relations among its
+constituents that are encoded as tuples:
+
+    [subject predicate object]
+
+There are many advantages to this approach, such as the ability to
+persist and restore graphs, and the inherent parallelism this type of
+computation can achieve using Clojures _reducers_ library with
+fork/join multiprocessing. The most significant advantage, thopugh, is
+that it provides the ability to represent and efficiently query
+arbitrarily complex and dynamically extensible concepts of data.  We
+may easily encode and index in unique ways by making assertions like
+_"EVERYTHING" is 10 letters long_ or _"SOME" begins with 'S'_:
+
+    ["EVERYTHING" :length 10]
+    ["SOME"       \S       0]
+
+But we may also arbitrarily extend our graph.  Say, for example, in
+the future we want to extend our game to provide a clue to the word
+being guessed that represented its possible "part of speech" (e.g.,
+```:NOUN :VERB :ADJECTIVE :SLANG``` and so on).  We would simply extend our
+tuple-store with the new assertions:
+
+    ["CAT" :isa :NOUN]
+    ["CAT" :isa :SLANG]
+
+The interface and technique for adding a strategy that incorporates
+this new type of information into its calculations would remain
+exactly the same.  It would just then be able to perform additional
+queries against the Graph to select for a given part of speech, or
+dertermine the part of speech for a given word.  Because the data of a
+Graph, tuples, are so generally defined, there can be clean separation
+of concerns between implementation of strategy and mechanics of the
+underlying indexing.  In fact, for inspiration about how various
+shemata can be used to encode new kinds of concepts within a given
+Graph, one might look to RDFS or OWL systems of description logic,
+frequently used for machine learning and knowledge representation. 
+
+Finally, the relations of a graph may be reified to express
+meta-relations among the tuples themselves.  For example, one could
+invent a new _predicate_, ```:level-of-confidence``` to express the
+ordinal relationship between subsequently numbered definitions of a
+word in some dictionary:
+
+    ["CAT" :def "A fuzzy creature..."    ]
+    ["CAT" :def "Person; 'A cool cat'..."]
+    [["CAT" :def "A fuzzy creature..."    ] :confidence 1]
+    [["CAT" :def "Person; 'A cool cat'..."] :confidence 2]
+
+### Tuple-Store
+
+Tuples are stored in Graphs which consist of a set of such tuples
+combined with appropriate indexing to suport generalized query in the
+form of another tuple that may use the special value _nil_ to
+represent "wildcard" or some literal to select for that value.
+Therefore, to enumerate all triples in a given Graph, g:
+
+    (query g nil nil nil)
+
+To find all words of length 3:
+
+    (query g nil :length 3)
+
+
 
 ### Corpus
 
@@ -119,19 +194,28 @@ lengths.
 	|          28 |          1 |
 	+--------------------------+
 
+
+
+
+
 ### Index
 
 There are two different types of indices used to narrow the selection
 of word possibilities for the two distinct cases that may occur for
 each letter guess:  either the guess is _incorrect_ and that letter
 occurs _nowhere_ in that word, or the guess is _correct_ and the
-letter occurs at some designated positiions.
+letter occurs at some designated positions.
 
 #### Exclusionary Index
 
 The simpler case is that in which a letter occurs nowhere within a
 given word.  Such a case represents a binary condition -- either
-present or not.  
+present or not.  Thus, using a 32-bit integer, we may represent the
+presence (or absence) of 32 individual search "terms".  Please do not
+be confused by the use of "term" here -- in the context this project,
+a "search term" is a single letter.  The terminology is just used to
+maintain consistency with other literature on inverted indices in
+which a "search term" is more commonly a word.
 
 	;; (word-terms-bits "")    => 0
 	;; (word-terms-bits "A")   => 1

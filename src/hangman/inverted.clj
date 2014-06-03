@@ -1,4 +1,4 @@
-2(ns hangman.inverted
+(ns hangman.inverted
   (:refer-clojure :exclude [])
   (:require [clojure.pprint :as pp])
   (:require [clojure.string :as str])
@@ -111,6 +111,7 @@
 
 (def exclusionary-index (memoize build-exclusionary-index))
 
+;; TODO: consolidate
 
 (defn exclude-terms [words & terms]
   (let [tv (word-terms-vector (apply str terms))
@@ -124,6 +125,21 @@
 (defn words-excluding-terms [words & terms]
   (let [vws (apply exclude-terms words terms)]
     (seq (map terms-vector-word vws))))
+
+
+(defn include-terms [words & terms]
+  (let [tv (word-terms-vector (apply str terms))
+        eix (build-exclusionary-index words)]
+    (filter identity
+      (for [i (range (count eix)) :let [wtv (aget eix i)] ]
+        (when-not (zero? (bit-and (bitop/mask 32 0) tv wtv))
+          wtv)))))
+
+
+(defn words-including-terms [words & terms]
+  (let [vws (apply include-terms words terms)]
+    (seq (map terms-vector-word vws))))
+
 
 
 
@@ -148,7 +164,8 @@
              (pp/print-table cols
                (map (partial zipmap cols)
                  (sort-by second >
-                   (map #(conj % (pp/cl-format nil "~6,2f" (/ (second %) tot 0.01)))
+                   (map #(conj % (pp/cl-format nil "~6,2f" (/ (second %)
+                                                             tot 0.01)))
                      (seq (term-frequency-distribution words)))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
