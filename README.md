@@ -141,6 +141,9 @@ word in some dictionary:
     [["CAT" :def "A fuzzy creature..."    ] :confidence 1]
     [["CAT" :def "Person; 'A cool cat'..."] :confidence 2]
 
+Its also possible to fully embrace the meta and to include assertions
+about the Graph itself or about other Graphs.
+
 ### Tuple-Store
 
 Tuples are stored in Graphs which consist of a set of such tuples
@@ -158,10 +161,7 @@ To find all words of length 3:
 
 By composing multiple queries and performing aggregate operations to
 create new graphs, we express arbitrarily complex data queries using a
-well defined algebra of set operations. Its also possible to fully
-embrace the meta and to include assertions about the graph itself or
-about other Graphs.
-
+well defined algebra of set operations. 
 
 #### Indexing
 
@@ -218,7 +218,7 @@ Likewise, an ```[p o s]``` index might look like:
                        "EVERYPLACE" ["EVERYPLACE" \E 0] 
                        "EVERYMAN"   ["EVERYMAN"   \E 0]
                        ...}
-                   1 {      
+                   1 {
                        "TEAM"       ["TEAM"       \E 1]
                        "LEADER"     ["LEADER"     \E 1]
                        ...}
