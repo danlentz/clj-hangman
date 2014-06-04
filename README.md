@@ -156,6 +156,77 @@ To find all words of length 3:
     (query g nil :length 3)
 
 
+By composing multiple queries and performing aggregate operations to
+create new graphs, we express arbitrarily complex data queries using a
+well defined algebra of set operations. Its also possible to fully
+embrace the meta and to include assertions about the graph itself or
+about other Graphs.
+
+
+#### Indexing
+
+A graph, under the hood, is indexed in some fashion so as to be
+queried efficiently by corresponding specializations of the
+```query``` multifunction.  This allows for alternative indexing
+techniques to be introduced in the future without change to api.
+There is a default, fully indexed graph implementation provided. It
+is a _hierarchical index_ extending over various permutations of
+```[s p o]``` -- _subject, predicate, object_. Please keep in mind
+that the internal structre of a Graph's index should be considered an
+implementation detail and not relied upon.  With that in mind, an
+```[s p o]``` index might appear as follows:
+
+    {[s p o] {
+              "EVERYTHING" {
+                            \E {
+                                 0  ["EVERYTHING" \E 0]
+                                 2  ["EVERYTHING" \E 2] }
+                            \V {
+                                 1  ["EVERYTHING" \V 1] }
+
+                            ...}
+                            
+              "EVERYTIME"  {
+                            \E {
+                                 0  ["EVERYTIME"  \E 0]
+                                 2  ["EVERYTIME"  \E 2] 
+                                 8  ["EVERYTIME"  \E 8] }
+                            ...}
+              ...}
+      ...}
+
+
+You'll notice that when one fully descends the index, the last value
+when one traverses the constituents of a given tuple is the tuple
+itself.  There are a couple of thoughts behind this structure, the
+first being the efficiency of holding the triple as a result of
+successful query, rather than recreating it.  Additionally, this
+allows for a symmetry of structure as nested key/value indices without
+imposing that the deepest layer is instead a set.  Thus, the actual
+schema of an ```[s p o]``` index is _subject, predicate, object, identity_:
+
+    (s p o . i)
+
+Likewise, an ```[p o s]``` index might look like:
+
+    {[p o s] {
+              \E {
+                   0 {           
+                       "EVERYTHING" ["EVERYTHING" \E 0]
+                       "EVERYTIME"  ["EVERYTIME"  \E 0]
+                       "EVERYONE"   ["EVERYONE"   \E 0]
+                       "EVERYPLACE" ["EVERYPLACE" \E 0] 
+                       "EVERYMAN"   ["EVERYMAN"   \E 0]
+                       ...}
+                   1 {      
+                       "TEAM"       ["TEAM"       \E 1]
+                       "LEADER"     ["LEADER"     \E 1]
+                       ...}
+                   ...}
+             ...}
+      ...}
+
+
 
 ### Corpus
 
