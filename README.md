@@ -93,7 +93,7 @@ efficient**.
 This solution is based on the notion of a _tuple store_ with a
 _generalized query_ interface called a _Graph_.  The information in a
 Graph is encoded as a series of assertions of relations among its
-constituents that are encoded as tuples:
+constituents. They are encoded as tuples:
 
     [subject predicate object]
 
