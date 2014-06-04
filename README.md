@@ -84,9 +84,9 @@ hangman with support for employment of various "pluggable" strategies
 which an end-user may implement.  Rather than approach this project
 with the objective of achieving the most optimized performance for one
 given strategy, we approach with a slightly different motiovation:
-support the most expressive, extensible, and generalized ability to
+**support the most expressive, extensible, and generalized ability to
 define arbitrarily complex strategies, while remaining relatively
-efficient.
+efficient**.
 
 ## Architecture
 
@@ -133,7 +133,7 @@ frequently used for machine learning and knowledge representation.
 Finally, the relations of a graph may be reified to express
 meta-relations among the tuples themselves.  For example, one could
 invent a new _predicate_, ```:level-of-confidence``` to express the
-ordinal relationship between subsequently numbered definitions of a
+ordinal precidence between subsequently numbered definitions of a
 word in some dictionary:
 
     ["CAT" :def "A fuzzy creature..."    ]
