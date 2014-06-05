@@ -12,6 +12,7 @@
                  [primitive-math                     "0.1.3"]
                  [clj-tuple                          "0.1.5"]
                  [iota                               "1.1.2"]
+                 [danlentz/clj-uuid                  "0.0.6-SNAPSHOT"]
                  [print-foo                          "0.5.1"]
                  [org.clojure/tools.logging          "0.2.6"]])
 
