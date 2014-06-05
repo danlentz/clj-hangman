@@ -55,8 +55,6 @@
 
 (defrecord Graph [id indices triples])
 
-
-
 (defprotocol GraphContainer
   (id       [this])
   (indices  [this])
@@ -119,8 +117,7 @@
      (-> (->Graph (uuid/the-uuid id) {} tuples)
        (add-index s p o)
        (add-index p o s)
-       (add-index o s p)
-       )))
+       (add-index o s p))))
 
 
 (defprotocol GraphBuilder
@@ -166,11 +163,7 @@
              (graph [this]
                (get @db this)))
 
-(assert (= (graph *context*) (graph nil) (graph uuid/+null+)))
-
-(defmacro with-context [designator & body]
-  `(binding [*context* (intern-graph (graph ~designator))]
-     ~@body))
+;; (assert (= (graph *context*) (graph nil) (graph uuid/+null+)))
 
 ;; (graph #{[1 2 3]})
 ;;  => #<Graph 2d1b48b0-723d-1195-8101-7831c1bbb832 (1 triples)>
@@ -185,6 +178,10 @@
 ;;  => #<Graph 6d863860-723d-1195-8101-7831c1bbb832 (1 triples)>
 ;;  => #<Graph 6d863860-723d-1195-8101-7831c1bbb832 (1 triples)>
 
+(defmacro with-context [designator & body]
+  `(binding [*context* (intern-graph (graph ~designator))]
+     ~@body))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Indexed Database Query
@@ -195,10 +192,10 @@
 ;; specific Graph implementation.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn supplied-constituents [graph subj pred obj] 
+(defn supplied-constituents [g subj pred obj] 
   (vec (conj (for [c [subj pred obj]]
                (not (nil? c)))
-         (class graph))))
+         (class g))))
 
 (defmulti query supplied-constituents)
 
@@ -260,20 +257,31 @@
                      (query (graph *context*) subj pred obj))))))
 
 
+;;;
+;;; Identity and Context: examples.
+;;;
 
 ;; (select (graph #{[1 2 3] [4 5 6]}) [nil nil nil])
-;;
 ;;   => #<Graph e9a62310-7238-1195-8101-7831c1bbb832 (2 triples)>    
 
 ;; (with-context #{[1 2 3]}
 ;;   (query (graph *context*) 1 2 nil))
-;;
-;;  => #{[1 2 3]}
+;;   => #{[1 2 3]}
 
 ;; (with-context (select (graph #{[1 2 3] [4 5 6]}) [nil nil nil])
 ;;   (triples (select (graph nil) [nil nil nil])))
-;;
-;;  => #{[4 5 6] [1 2 3]}
+;;   => #{[4 5 6] [1 2 3]}
+
+;; (select (graph #{[1 2 3] [4 5 6]}) [nil nil nil])
+;;   => #<Graph 0322eb40-723c-1195-8101-7831c1bbb832 (2 triples)>
+;;   => #<Graph 0322eb40-723c-1195-8101-7831c1bbb832 (2 triples)>
+;;   => #<Graph 0322eb40-723c-1195-8101-7831c1bbb832 (2 triples)>
+
+;; (with-context (select (graph #{[1 2 3] [4 5 6]}) [nil nil nil])
+;;   (select (graph nil) [nil nil nil]))
+;;   => #<Graph 0322eb40-723c-1195-8101-7831c1bbb832 (2 triples)>
+;;   => #<Graph 0322eb40-723c-1195-8101-7831c1bbb832 (2 triples)>
+;;   => #<Graph 0322eb40-723c-1195-8101-7831c1bbb832 (2 triples)>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
