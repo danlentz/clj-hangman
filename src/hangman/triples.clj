@@ -265,17 +265,15 @@
 ;;
 ;;   => #<Graph e9a62310-7238-1195-8101-7831c1bbb832 (2 triples)>    
 
-
 ;; (with-context #{[1 2 3]}
 ;;   (query (graph *context*) 1 2 nil))
 ;;
 ;;  => #{[1 2 3]}
 
-
- (with-context (select (graph #{[1 2 3] [4 5 6]}) [nil nil nil])
-   (triples (select (graph nil) [nil nil nil])))
+;; (with-context (select (graph #{[1 2 3] [4 5 6]}) [nil nil nil])
+;;   (triples (select (graph nil) [nil nil nil])))
 ;;
-;; #{[4 5 6] [1 2 3]}
+;;  => #{[4 5 6] [1 2 3]}
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -304,13 +302,3 @@
   (every? #(= (triples g) %) (map triples more)))
 
 
-
-;; (:triples
-;; (graph-union
-;;   (make-graph (word-triples "EVERYTHING"))
-;;   (make-graph (word-triples "SOMETHING"))))
-
-;; (:triples
-;; (graph-intersection
-;;   (make-graph (word-triples "EVERYTHING"))
-;;   (make-graph (word-triples "EVERYTHING"))))
