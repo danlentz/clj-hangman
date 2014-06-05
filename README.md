@@ -236,8 +236,10 @@ and associated with both its UUID identifier and the set of triples it
 contains.  The operator ```intern-graph``` is used to instate a given
 graph context, after which that graph will remain indexed by content.
 
-A higher-level query operator, ```select```, is used to perform
-context-aware query.
+A higher-level query protocol, ```select```, is used to perform
+context-aware query.  ```select``` indirectly invokes the appropriate
+query multifunction according to the class of the input graph and the
+supplied constituents of a query triple.
 
 	;;;
 	;;; Identity and Context: examples.
