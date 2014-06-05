@@ -226,6 +226,46 @@ Likewise, an ```[p o s]``` index might look like:
              ...}
       ...}
 
+#### Context
+
+Context refers to a default global state as may be in effect at some
+point in program execution. It is a graph among a global collection
+represented and indexed by UUID identifier.  Once a graph has been
+interned in this index, the fully built graph structure will be stored
+and associated with both its UUID identifier and the set of triples it
+contains.  The operator ```intern-graph``` is used to instate a given
+graph context, after which that graph will remain indexed by content.
+
+A higher-level query operator, ```select```, is used to perform
+context-aware query.
+
+	;;;
+	;;; Identity and Context: examples.
+	;;;
+
+	;; (select (graph #{[1 2 3] [4 5 6]}) [nil nil nil])
+	;;   => #<Graph e9a62310-7238-1195-8101-7831c1bbb832 (2 triples)>
+
+	;; (with-context #{[1 2 3]}
+	;;   (query (graph *context*) 1 2 nil))
+	;;   => #{[1 2 3]}
+
+	;; (with-context (select (graph #{[1 2 3] [4 5 6]}) [nil nil nil])
+	;;   (triples (select (graph nil) [nil nil nil])))
+	;;   => #{[4 5 6] [1 2 3]}
+
+	;; (select (graph #{[1 2 3] [4 5 6]}) [nil nil nil])
+	;;   => #<Graph 0322eb40-723c-1195-8101-7831c1bbb832 (2 triples)>
+	;;   => #<Graph 0322eb40-723c-1195-8101-7831c1bbb832 (2 triples)>
+	;;   => #<Graph 0322eb40-723c-1195-8101-7831c1bbb832 (2 triples)>
+
+	;; (with-context (select (graph #{[1 2 3] [4 5 6]}) [nil nil nil])
+	;;   (select (graph nil) [nil nil nil]))
+	;;   => #<Graph 0322eb40-723c-1195-8101-7831c1bbb832 (2 triples)>
+	;;   => #<Graph 0322eb40-723c-1195-8101-7831c1bbb832 (2 triples)>
+	;;   => #<Graph 0322eb40-723c-1195-8101-7831c1bbb832 (2 triples)>
+
+
 
 
 ### Corpus
