@@ -1,59 +1,21 @@
-(ns hangman
+(ns hangman.triples
   (:refer-clojure :exclude [])
   (:require [clojure.pprint :as pp])
   (:require [clojure.string :as str])
   (:require [clojure.core.reducers :as r])
   (:require [clojure.tools.logging :as log])
   (:require [hangman.util  :as util])
-  (:require [hangman.corpus :as corpus])
+  (:require [clj-uuid :as uuid])
   (:use     [clj-tuple])
   (:use     [print.foo]))
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Global State
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def db (atom nil))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Triples Generation
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; TODO: this is somewhat ugly.
-
-(defn word-triples [word]
-  (set (conj
-         (map #(apply tuple %)
-           (apply concat
-             (for [c (map char (range (int \A) (inc (int \Z))))
-                   :let [posns (util/positions #(= % c) word)]]
-               (if (empty? posns)
-                 (list (list word c -1))
-                 (map #(conj (list c %) word) posns)))))
-         (tuple word :length (count word)))))
-
-;; (word-triples "abccddd")
-
-(defn word-collection-triples [coll]
-  (r/fold clojure.set/union clojure.set/union
-    (mapv word-triples coll)))
-
-;; (corpus/with-corpus []
-;;   (count (word-collection-triples (:all-words corpus/*corpus*))))
-    
-(defn file-triples [filename]
-  (r/fold clojure.set/union clojure.set/union
-    (mapv word-triples (corpus/words-from-file filename))))
-
-;; (util/run-and-measure-timing 
-;;   (count (file-triples corpus/+default-corpus-file+)))
-;;
-;;  => {:response         4511728,
-;;      :start-time 1401197847802,
-;;      :end-time   1401197881150,
-;;      :time-taken         33348}
+(def db (atom {}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Tuple Constituent Accessors
@@ -91,11 +53,29 @@
 ;; Graph Constructors
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defrecord Graph [indices triples])
+(defrecord Graph [id indices triples])
+
+
+
+(defprotocol GraphContainer
+  (id       [this])
+  (indices  [this])
+  (triples  [this]))
+
+(extend-type Graph GraphContainer
+             (id [this]
+               (:id this))
+             (indices [this]
+               (:indices this))
+             (triples [this]
+               (:triples this)))
+
 
 (defmethod print-method Graph [g ^java.io.Writer w]
-  (.write w "#<Graph (")
-  (.write w (str (count (:triples g))))
+  (.write w "#<Graph ")
+  (.write w (str (id g)))
+  (.write w " (")
+  (.write w (str (count (triples g))))
   (.write w " triples)>"))
 
 
@@ -124,84 +104,95 @@
     {} triples))
 
 
-(defn add-index [graph key1 key2 key3]
-  (->Graph
-    (assoc (:indices graph)
-      [key1 key2 key3] (make-index (:triples graph) key1 key2 key3))
-    (:triples graph)))
+(defn add-index [g key1 key2 key3]
+  (->Graph (id g)
+    (assoc (indices g)
+      [key1 key2 key3] (make-index (triples g) key1 key2 key3))
+    (triples g)))
 
 
-(defn make-graph [triples]
-  (-> (->Graph {} triples)
-    (add-index s p o)
-    (add-index p o s)
-    (add-index o s p)))
+(defn make-graph
+  ([tuples]
+     (make-graph (uuid/v1) tuples))
+  ([id tuples]
+     (assert (uuid/uuid? id))
+     (-> (->Graph (uuid/the-uuid id) {} tuples)
+       (add-index s p o)
+       (add-index p o s)
+       (add-index o s p)
+       )))
 
 
-  
+(defprotocol GraphBuilder
+  (graph [this]))
 
-;;;
-;;  These are the "graph constructors" which build a data-structure
-;; that represents a (multiply) indexed graph from the set of triples
-;; obtained, usually, using the top-level parser api 'file-triples'.
-;;
-;;  The indices are hierarchical and dynamically generated based on a
-;; provided sequence of "keys" that designate the triple constituent
-;; represented at a specific depth within a given index.  The standard
-;; set of indices built by default using 'indexed-graph-from-file' may
-;; be easily extended or reduced if there is some compelling need to
-;; do so.  As currently implemented, the graph indexing is provided
-;; for all single constituent permutations. Multiple constituent
-;; indexing can be incorporated with only minor changes to current
-;; index and query facilities.
-;;
-;;  Each index is structured in a similar way to the following model,
-;; which is shown based on the "normal" SPO triple constituent key
-;; order [s p o]:
-;;
-;;  {subj1 {pred1 obj1,
-;;          pred2 obj2,
-;;          pred3 obj3 ...},
-;;   subj2 {pred1 obj1,
-;;          pred2 obj2,
-;;          pred3 obj3 ...}
-;;   ...}
-;;
+;; TODO: Perhaps specialize on more abstract classes eg., Collection, ...?
+
+(extend-type Graph GraphBuilder
+             (graph [this]
+               this))
+
+(extend-type clojure.lang.PersistentHashSet GraphBuilder
+             (graph [this]
+               (or (get @db this)                
+                 (make-graph this))))
+
+(extend-type clojure.lang.PersistentList GraphBuilder
+             (graph [this]
+               (graph (set this))))
+
+(extend-type clojure.lang.PersistentVector GraphBuilder
+             (graph [this]
+               (graph (set this))))
+
+(extend-type nil GraphBuilder
+             (graph [this]
+               (make-graph uuid/+null+ #{})))
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Database Management
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn set-graph! [graph]
-  (swap! db (constantly graph)))
+(defn intern-graph [g]
+  (util/returning (id g)
+    (swap! db #(into % [[(id g) g] [(triples g) g]]))))
 
-(defn clear-db! []
-  (set-graph! nil))
+  
+(def ^{:dynamic true} *context* (intern-graph (graph nil)))
 
-(defn build-db!
-  ([]
-     (build-db! corpus/+default-corpus-file+))
-  ([filename]
-     (set-graph! (make-graph (file-triples filename)))
-     @db))
+(extend-type java.util.UUID GraphBuilder
+             (graph [this]
+               (get @db this)))
 
-;;;
-;;  These are the actual "top-level" database API functions which are pleasantly
-;; trivial to implement using the facilities we have created for parsing and
-;; graph construction.  Primarily, these are responsible for atomic interaction
-;; with global state, which is limited to only the single var 'db'.
-;;
-;;  Its worth mentioning that there is nothing limiting the global db to only
-;; the two graphs created from the code-puzzle test data.  Arbitrarily many
-;; filenames may be passed to 'build-db!' and, provided the same file-naming
-;; conventions are followed as the existing data files, the db will be built
-;; and indexed appropriately for as many graphs as desired.  
-;;;
+(assert (= (graph *context*) (graph nil) (graph uuid/+null+)))
+
+(defmacro with-context [designator & body]
+  `(binding [*context* (intern-graph (graph ~designator))]
+     ~@body))
+
+;; (graph #{[1 2 3]})
+;;  => #<Graph 2d1b48b0-723d-1195-8101-7831c1bbb832 (1 triples)>
+;;  => #<Graph 270f47a0-723d-1195-8101-7831c1bbb832 (1 triples)>
+;;  => #<Graph 257a01a0-723d-1195-8101-7831c1bbb832 (1 triples)>
+
+;; (intern-graph (graph #{[1 2 3]}))
+;;  => #uuid "6d863860-723d-1195-8101-7831c1bbb832"
+
+;; (graph #{[1 2 3]})
+;;  => #<Graph 6d863860-723d-1195-8101-7831c1bbb832 (1 triples)>
+;;  => #<Graph 6d863860-723d-1195-8101-7831c1bbb832 (1 triples)>
+;;  => #<Graph 6d863860-723d-1195-8101-7831c1bbb832 (1 triples)>
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Indexed Database Query
+;;
+;; Implememnted as a multifunction rather than protocol to allow modular
+;; separation of implmentation based on supplied constituents of query.
+;; this, for example, might exploit various indexing capabilities of a
+;; specific Graph implementation.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn supplied-constituents [graph subj pred obj] 
@@ -212,145 +203,105 @@
 (defmulti query supplied-constituents)
 
 (defmethod query [Graph false false false] [graph subj pred obj]
-  (:triples graph))
+  (triples graph))
 
 
 (defmethod query [Graph true false false]  [graph subj pred obj]
-  (let [i0 ((:indices graph) [s p o])
+  (let [i0 ((indices graph) [s p o])
         i1 (get i0 subj)]
     (set (for [pred (keys i1)
                obj  (keys (get i1 pred))]
            (get-in i1 [pred obj])))))
 
 (defmethod query [Graph false true false]  [graph subj pred obj]
-  (let [i0 ((:indices graph) [p o s])
+  (let [i0 ((indices graph) [p o s])
         i1 (get i0 pred)]
     (set (for [obj  (keys i1)
                subj (keys (get i1 obj))]
            (get-in i1 [obj subj])))))
  
 (defmethod query [Graph false false true]  [graph subj pred obj]
-  (let [i0 ((:indices graph) [o s p])
+  (let [i0 ((indices graph) [o s p])
         i1 (get i0 obj)]
     (set (for [subj (keys i1)
                pred (keys (get i1 subj))]
            (get-in i1 [subj pred])))))
 
 (defmethod query [Graph true true false]  [graph subj pred obj]
-  (let [idx ((:indices graph) [s p o])]
+  (let [idx ((indices graph) [s p o])]
     (set (for [obj (keys (get-in idx [subj pred]))]
            (tuple subj pred obj)))))
  
 (defmethod query [Graph true false true]  [graph subj pred obj]
-  (let [idx ((:indices graph) [o s p])]
+  (let [idx ((indices graph) [o s p])]
     (set (for [pred (keys (get-in idx [obj subj]))]
            (tuple subj pred obj)))))
   
 (defmethod query [Graph false true true]  [graph subj pred obj]
-  (let [idx ((:indices graph) [p o s])]
+  (let [idx ((indices graph) [p o s])]
     (set (for [subj (keys (get-in idx [pred obj]))]
            (tuple subj pred obj)))))
  
 (defmethod query [Graph true true true]   [graph subj pred obj]
   (set (filter identity
-         (vector ((:triples graph) [subj pred obj])))))
+         (vector ((triples graph) [subj pred obj])))))
+
+(defprotocol GraphQuery
+  (select [this tup]))
+
+(extend-type Graph GraphQuery
+             (select [this tup]
+               (graph
+                 (let [subj (s tup)
+                       pred (p tup)
+                       obj  (o tup)]
+                   (clojure.set/union
+                     (query this subj pred obj)
+                     (query (graph *context*) subj pred obj))))))
 
 
-;; (util/run-and-measure-timing
-;;   (query @db "EVERYTHING" nil nil))
 
-;; (util/run-and-measure-timing
-;;   (take 100 (query @db nil \J nil)))
-
-;; (util/run-and-measure-timing
-;;   (take 10 (query @db nil nil 4)))
-
-;; (util/run-and-measure-timing
-;;   (query @db nil \A 0))
-
-;; (util/run-and-measure-timing
-;;   (query @db "EVERYTHING" \E nil))
-
-;; (util/run-and-measure-timing
-;;   (query @db "EVERYTHING" nil 0))
-
-;; (query @db "EVERYTHING" \E 0)
-;;  => #{["EVERYTHING" \E 0]}
-
-;; (query @db "EVERYTHING" \E 1)
-;;  => #{}
-
-;; (query @db nil \Q 8)
-;;  => #{["VENTRILOQUISTIC" \Q 8]
-;;       ["VENTRILOQUIES" \Q 8]
-;;       ["PICTURESQUENESSES" \Q 8]
-;;       ["GRANDILOQUENCES" \Q 8]
-;;       ["VENTRILOQUIZING" \Q 8]
-;;       ["DISCOTHEQUES" \Q 8]
-;;       ["MULTIFREQUENCY" \Q 8]
-;;       ["PLATERESQUE" \Q 8]
-;;       ["VENTRILOQUISM" \Q 8]
-;;       ["VENTRILOQUY" \Q 8]
-;;       ["GIGANTESQUE" \Q 8]
-;;       ["DEMISEMIQUAVERS" \Q 8]
-;;       ["DEMISEMIQUAVER" \Q 8]
-;;       ["VENTRILOQUIALLY" \Q 8]
-;;       ["VENTRILOQUISTS" \Q 8]
-;;       ["VENTRILOQUIZE" \Q 8]
-;;       ["PICTURESQUENESS" \Q 8]
-;;       ["GRANDILOQUENCE" \Q 8]
-;;       ["GRANDILOQUENT" \Q 8]
-;;       ["VENTRILOQUIZED" \Q 8]
-;;       ["NONDELINQUENT" \Q 8]
-;;       ["PICTURESQUE" \Q 8]
-;;       ["PICTURESQUELY" \Q 8]
-;;       ["VENTRILOQUISMS" \Q 8]
-;;       ["DISCOTHEQUE" \Q 8]
-;;       ["VENTRILOQUIZES" \Q 8]
-;;       ["GRANDILOQUENTLY" \Q 8]
-;;       ["VENTRILOQUIAL" \Q 8]
-;;       ["VENTRILOQUIST" \Q 8]}
-
-
-;;;
-;;  Ok, so this a is way to implemnent the "lower-level" query engine.  There
-;; are 8 possible combinations of supplied arguments, so 8 methods are
-;; needed to implement optimally spread queries over available indexes. Note
-;; we are always requiring the first query constituent, which specifies a
-;; graph "name", but there is nothing to prevent future extension to a
-;; full-fledged quad-store, which would require addition of 8 additional
-;; query methods and modest updates turning "triple" related code into the
-;; equivalent "quad" routines.
+;; (select (graph #{[1 2 3] [4 5 6]}) [nil nil nil])
 ;;
-;;  If this effort were to continue, these "lower-level" query methods are the 
-;; essential pieces one would use to build a "higher-level" query language.  It is
-;; not very much more effort/code required to build the rudiments of a graph-pattern
-;; based query system along the lines of SparQL once one has completed writing these 
-;; fundamental "lower-level" query operations.
+;;   => #<Graph e9a62310-7238-1195-8101-7831c1bbb832 (2 triples)>    
 
+
+;; (with-context #{[1 2 3]}
+;;   (query (graph *context*) 1 2 nil))
+;;
+;;  => #{[1 2 3]}
+
+
+ (with-context (select (graph #{[1 2 3] [4 5 6]}) [nil nil nil])
+   (triples (select (graph nil) [nil nil nil])))
+;;
+;; #{[4 5 6] [1 2 3]}
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Graph Operations
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn graph-union [graph & more]
-  (make-graph
+(defn graph-union [g & more]
+  (graph
     (reduce clojure.set/union
-      (map :triples (conj more graph)))))
+      (map triples (conj more g)))))
 
 
-(defn graph-intersection [graph & more]
-  (make-graph
+(defn graph-intersection [g & more]
+  (graph
     (reduce clojure.set/intersection
-      (map :triples (conj more graph)))))
+      (map triples (conj more g)))))
 
 
-(defn graph-difference [graph & more]
-  (make-graph
+(defn graph-difference [g & more]
+  (graph
     (reduce clojure.set/difference
-      (map :triples (conj more graph)))))
+      (map triples (conj more g)))))
 
+
+(defn graph-equal? [g & more]
+  (every? #(= (triples g) %) (map triples more)))
 
 
 
@@ -363,91 +314,3 @@
 ;; (graph-intersection
 ;;   (make-graph (word-triples "EVERYTHING"))
 ;;   (make-graph (word-triples "EVERYTHING"))))
-
-(defn words-of-length [graph length]
-  (set (map s (query graph nil :length length))))
-
-
-;; (util/run-and-measure-timing
-;;   (words-of-length @db 2))
-;;
-;;   =>  {:response #{"PE" "EN" "UH" "SI" "IT" "PI" "FA" "MY" "AM" "BI" "YO"
-;;     "MU" "LI" "NU" "AY" "AH" "IF" "HO" "AX" "OD" "NE" "ON" "OW" "EX" "ME"
-;;     "BO" "JO" "KA" "IS" "TA" "EH" "AT" "EL" "XU" "OY" "UP" "MM" "YE" "AN"
-;;     "MI" "UM" "PA" "UT" "GO" "BY" "XI" "MO" "AR" "AW" "TI" "ID" "BA" "TO"
-;;     "SH" "MA" "OE" "AD" "WO" "OM" "HE" "SO" "DO" "AL" "LA" "DE" "AS" "AA"
-;;     "NO" "ET" "AG" "BE" "OX" "OR" "EM" "ED" "WE" "US" "HA" "AB" "YA" "EF"
-;;     "RE" "IN" "ES" "OS" "UN" "LO" "HI" "ER" "AE" "HM" "AI" "OP" "OF" "OH"
-;;     "NA"},
-;;        :start-time 1401743282516,
-;;        :end-time   1401743282516,
-;;        :time-taken 0}
-
-(defn words-excluding-letter [graph letter]
-  (set (map s (query graph nil letter -1))))
-
-(defn words-excluding [graph & letters]
-  (apply clojure.set/intersection 
-    (filter identity
-      (map (partial words-excluding-letter graph) letters))))
-
-(defn words-with-letter-position [graph letter position]
-  (set (map s (query graph nil letter position))))
-
-
-;; (util/run-and-measure-timing
-;;   (words-excluding @db \A ))
-
-
-
-;; (util/run-and-measure-timing
-;;   (clojure.set/intersection
-;;     (words-of-length @db 3)
-;;     (words-excluding @db \A \E \I \O)
-;;     ))
-;;
-;;   => {:response #{"GUY" "MUM" "URD" "JUG" "NTH" "HUP" "RUG" "PUR"
-;; "BUG" "SUM" "STY" "DUH" "DUN" "RUB" "HMM" "HUM" "GYP" "FRY" "TRY"
-;; "SHH" "GUV" "NUS" "WHY" "PUD" "HUT" "SUN" "HUN" "DUD" "LUG" "WUD"
-;; "GUN" "TUG" "HUH" "GUT" "CUP" "SHY" "TUN" "URB" "BUS" "SUB" "TUX"
-;; "CUB" "DRY" "CRY" "JUN" "SPY" "UNS" "THY" "UPS" "TUP" "FLY" "PUB"
-;; "BUM" "NUT" "PHT" "HUB" "SKY" "CUT" "TUT" "FUG" "PYX" "NUB" "BUY"
-;; "CWM" "GYM" "ULU" "UTS" "PUN" "BUD" "UGH" "CUR" "PUG" "PUL" "BUR"
-;; "DUB" "DUG" "JUT" "HUG" "SUQ" "LUX" "PUP" "GUL" "FUD" "YUM" "WRY"
-;; "CUM" "WYN" "CUD" "TSK" "FLU" "FUN" "YUK" "GNU" "UMM" "BUB" "SYN"
-;; "DUP" "TUB" "SUP" "PUS" "FUB" "MUG" "URN" "UMP" "BRR" "VUG" "RUM"
-;; "NUN" "MUN" "BYS" "BUN" "RUN" "LUV" "PRY" "GUM" "FUR" "PLY" "BUT"
-;; "MUD" "PUT" "SLY" "LUM" "HYP" "MUS" "MUT" "YUP" "JUS" "RUT"},
-;;      :start-time 1401745795429,
-;;      :end-time 1401745796055,
-;;      :time-taken 626}
-
-
-;; (util/run-and-measure-timing
-;;   (clojure.set/intersection
-;;     (words-of-length @db 3)
-;;     (words-excluding @db \A \E \I \O)
-;;     (words-with-letter-position @db \F 0)
-;;     ))
-;;
-;;  => {:response #{"FRY" "FLY" "FUG" "FUD" "FLU" "FUN" "FUB" "FUR"},
-;;      :start-time 1401748612893,
-;;      :end-time 1401748613531,
-;;      :time-taken 638}
-
-
-;; (util/run-and-measure-timing
-;;   (clojure.set/intersection
-;;     (words-of-length @db 3)
-;;     (words-excluding @db \A \E \I \O)
-;;     (words-with-letter-position @db \F 0)
-;;     (words-with-letter-position @db \U 1)
-;;     ))
-;;
-;;  => {:response #{"FUG" "FUD" "FUN" "FUB" "FUR"},
-;;      :start-time 1401748827035,
-;;      :end-time 1401748827689,
-;;      :time-taken 654}
-
-
-
