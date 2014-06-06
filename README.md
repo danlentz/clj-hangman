@@ -238,7 +238,8 @@ graph context, after which that graph will remain indexed accessible
 by content.  Notice that after a given graph has been interned by its
 use as a context, any query returning a graph with the same contents
 returns the same, physical graph.  It is only indexed once.  Think of
-this as a kind of _graph memoization_.
+this as a kind of _graph memoization_.  Or, in other words, graphs are
+addressable by content.
 
 A higher-level query protocol, ```select```, is used to perform
 context-aware query.  ```select``` indirectly invokes the appropriate
