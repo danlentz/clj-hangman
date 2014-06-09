@@ -31,7 +31,7 @@
 ;; Global State
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def db (atom nil))
+(def word-db (atom nil))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -41,7 +41,7 @@
 ;; TODO: this is somewhat ugly.
 
 (defn word-triples [word]
-  (set (conj
+  (set (concat
          (map #(apply tuple %)
            (apply concat
              (for [c (map char (range (int \A) (inc (int \Z))))
@@ -49,7 +49,9 @@
                (if (empty? posns)
                  (list (list word c -1))
                  (map #(conj (list c %) word) posns)))))
-         (tuple word :length (count word)))))
+         [(tuple word :length (count word))
+          (tuple word :type   :WORD)]
+         )))
 
 ;; (word-triples "abccddd")
 
@@ -57,15 +59,13 @@
   (r/fold clojure.set/union clojure.set/union
     (mapv word-triples coll)))
 
-;; (corpus/with-corpus []
-;;   (count (word-collection-triples (:all-words corpus/*corpus*))))
-    
+
 (defn file-triples [filename]
   (r/fold clojure.set/union clojure.set/union
-    (mapv word-triples (corpus/words-from-file filename))))
+    (mapv word-triples (words-from-file filename))))
 
 ;; (util/run-and-measure-timing 
-;;   (count (file-triples corpus/+default-corpus-file+)))
+;;   (count (file-triples +default-corpus-file+)))
 ;;
 ;;  => {:response         4511728,
 ;;      :start-time 1401197847802,
@@ -76,24 +76,24 @@
 ;; Database Management
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn set-graph! [graph]
-  (swap! db (constantly graph)))
+(defn set-word-db! [graph]
+  (swap! word-db (constantly graph)))
 
-(defn clear-db! []
+(defn clear-word-db! []
   (set-graph! nil))
 
-(defn build-db!
+(defn build-word-db!
   ([]
-     (build-db! +default-corpus-file+))
+     (build-word-db! +default-corpus-file+))
   ([filename]
-     (set-graph! (make-graph (file-triples filename)))
-     @db))
+     (set-word-db! (make-graph (file-triples filename)))
+     @word-db))
 
 ;;;
 ;;  These are the actual "top-level" database API functions which are pleasantly
 ;; trivial to implement using the facilities we have created for parsing and
 ;; graph construction.  Primarily, these are responsible for atomic interaction
-;; with global state, which is limited to only the single var 'db'.
+;; with global state, which is limited to only the single atom 'word-db'.
 ;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -101,12 +101,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defn words-of-length [graph length]
-  (set (map s (query graph nil :length length))))
+(defn words-of-length [g length]
+  (set (map s (query g nil :length length))))
 
 
 ;; (util/run-and-measure-timing
-;;   (words-of-length @db 2))
+;;   (words-of-length @word-db 2))
 ;;
 ;;   =>  {:response #{"PE" "EN" "UH" "SI" "IT" "PI" "FA" "MY" "AM" "BI" "YO"
 ;;     "MU" "LI" "NU" "AY" "AH" "IF" "HO" "AX" "OD" "NE" "ON" "OW" "EX" "ME"
@@ -120,27 +120,48 @@
 ;;        :end-time   1401743282516,
 ;;        :time-taken 0}
 
-(defn words-excluding-letter [graph letter]
-  (set (map s (query graph nil letter -1))))
+(defn words-excluding-letter [g letter]
+  (set (map s (query g nil letter -1))))
 
-(defn words-excluding [graph & letters]
+(defn words-excluding [g & letters]
   (apply clojure.set/intersection 
     (filter identity
-      (map (partial words-excluding-letter graph) letters))))
+      (map (partial words-excluding-letter g) letters))))
 
-(defn words-with-letter-position [graph letter position]
-  (set (map s (query graph nil letter position))))
+(defn words-with-letter-position [g letter position]
+  (set (map s (query g nil letter position))))
+
+(defn all-words [g]
+  (mapv s (query g nil :type :WORD)))
+
+(defn random-element [coll]
+  (nth coll (rand-int (count coll))))
+
+(defn random-word [g]
+  (random-element (all-words g)))
+
+(defn random-words [g n]
+  (loop [words #{} all (all-words g)]
+    (if (= (count words) n)
+      words
+      (recur (conj words (random-element all)) all))))
+
+
 
 
 ;; (util/run-and-measure-timing
-;;   (words-excluding @db \A ))
+;;   (random-word @word-db))
 
+;; (util/run-and-measure-timing
+;;   (random-words @word-db 10))
 
+;; (util/run-and-measure-timing
+;;   (words-excluding @word-db \A ))
 
 ;; (util/run-and-measure-timing
 ;;   (clojure.set/intersection
-;;     (words-of-length @db 3)
-;;     (words-excluding @db \A \E \I \O)
+;;     (words-of-length @word-db 3)
+;;     (words-excluding @word-db \A \E \I \O)
 ;;     ))
 ;;
 ;;   => {:response #{"GUY" "MUM" "URD" "JUG" "NTH" "HUP" "RUG" "PUR"
@@ -162,9 +183,9 @@
 
 ;; (util/run-and-measure-timing
 ;;   (clojure.set/intersection
-;;     (words-of-length @db 3)
-;;     (words-excluding @db \A \E \I \O)
-;;     (words-with-letter-position @db \F 0)
+;;     (words-of-length @word-db 3)
+;;     (words-excluding @word-db \A \E \I \O)
+;;     (words-with-letter-position @word-db \F 0)
 ;;     ))
 ;;
 ;;  => {:response #{"FRY" "FLY" "FUG" "FUD" "FLU" "FUN" "FUB" "FUR"},
@@ -175,10 +196,10 @@
 
 ;; (util/run-and-measure-timing
 ;;   (clojure.set/intersection
-;;     (words-of-length @db 3)
-;;     (words-excluding @db \A \E \I \O)
-;;     (words-with-letter-position @db \F 0)
-;;     (words-with-letter-position @db \U 1)
+;;     (words-of-length @word-db 3)
+;;     (words-excluding @word-db \A \E \I \O)
+;;     (words-with-letter-position @word-db \F 0)
+;;     (words-with-letter-position @word-db \U 1)
 ;;     ))
 ;;
 ;;  => {:response #{"FUG" "FUD" "FUN" "FUB" "FUR"},
