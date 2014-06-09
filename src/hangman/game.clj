@@ -5,9 +5,8 @@
   (:require [clojure.core.reducers  :as r])
   (:require [clojure.tools.logging  :as log])
   (:require [hangman.util  :as util])
+  (:require [hangman.words :as words])
   (:use     [hangman.util :only [returning returning-bind indexed]])
-  (:use     [hangman.corpus])
-  (:use     [hangman.inverted])
   (:use     [print.foo]))
 
 
@@ -96,18 +95,18 @@
 
   (guessLetter [this ch]
     (.assertCanKeepGuessing this)
-    (if ((.getAllGuessedLetters this) (term (term-id ch)))
+    (if ((.getAllGuessedLetters this) ch)
       (.getGuessedSoFar this)
       (do
         (let [newsofar (vec (for [i (range (count secret))
                                   :let [c (nth secret i)]]
-                              (if (=  (term-id c) (term-id ch))
-                                (term (term-id c))
+                              (if (= c ch)
+                                c
                                 (nth sofar i))))]
           (if (= sofar newsofar)
-            (set! incorrect (conj incorrect (term (term-id ch))))
+            (set! incorrect (conj incorrect ch))
             (do
-              (set! correct (conj correct (term (term-id ch))))
+              (set! correct (conj correct ch))
               (set! sofar newsofar))))
         (.getGuessedSoFar this))))
 
@@ -130,15 +129,12 @@
       (.gameStatus this))))
 
 
-(defn new-game
-  ([secret-word max-wrong-guesses]
-     (new-game secret-word max-wrong-guesses +default-corpus-file+))
-  ([secret-word max-wrong-guesses corpus-file]
+(defn new-game [secret-word max-wrong-guesses]
      (HangmanGame.
        secret-word
        (vec (repeat (count secret-word) +unknown+))
        max-wrong-guesses
-       #{} #{} #{})))
+       #{} #{} #{}))
 
 
 
@@ -165,50 +161,3 @@
 
 
 
-
-;; (comment
-
-;;   (.gameStatus x)
-;;   (.getGuessedSoFar x)
-;;   (.getSecretWordLength y)
-;;   (.getMaxWrongGuesses x)
-;;   (.numWrongGuessesMade x)
-;;   (.numWrongGuessesRemaining x)
-;;   (.getCorrectlyGuessedLetters x)
-;;   (.getIncorrectlyGuessedLetters x)
-;;   (.getAllGuessedLetters x)
-;;   (.assertCanKeepGuessing x)
-;;   (.currentScore x)
-
-;;   (.getIncorrectlyGuessedWords x)
-
-;;   (.guessLetter x \p)
-
-;;   (def x (new-game "XYZ" 5))
-;;   (.guessWord x "XYZA")
-;;   (.currentScore x)
-;;   (.guessWord x "XYZ")
-
-;;   (with-corpus []
-;;     (def g (new-game (random-word *corpus*) 5))
-;;     (def c *corpus*)
-;;     g)
-
-;;   (with-corpus [c]
-;;     (word-count *corpus*)
-;;     (.guessLetter g \e)
-;;     g
-;;     )
-
-;;   ;; #<HangmanGame ___; score=0; status=:keep-guessing>
-
-
-;;   (with-corpus []
-;;     (let [g (new-game (random-word *corpus*) 5)
-;;           c *corpus*]
-;;       (.makeGuess (->LetterGuess \e) g)
-;;       (.makeGuess (->WordGuess "TOURNAMENT") g)
-;;       g))
-
-
-;;   )
