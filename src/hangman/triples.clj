@@ -153,8 +153,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn intern-graph [g]
-  (util/returning (id g)
-    (swap! db #(into % [[(id g) g] [(triples g) g]]))))
+  (let [x (@db (triples g))]
+    (if x
+      (id x)
+      (util/returning (id g)
+        (swap! db #(into % [[(id g) g] [(triples g) g]]))))))
 
   
 (def ^{:dynamic true} *context* (intern-graph (graph nil)))
@@ -243,6 +246,12 @@
   (set (filter identity
          (vector ((triples graph) [subj pred obj])))))
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; SELECT (Context-Aware Query)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defprotocol GraphQuery
   (select [this tup]))
 
@@ -256,10 +265,21 @@
                      (query this subj pred obj)
                      (query (graph *context*) subj pred obj))))))
 
+(extend-type nil GraphQuery
+             (select [this tup]
+               (graph nil)))
 
-;;;
+(extend-type java.util.UUID GraphQuery
+             (select [this tup]
+               (select (graph this) tup)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Identity and Context: examples.
-;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (select uuid/+null+ [1 2 3])
+;;  => #<Graph 00000000-0000-0000-0000-000000000000 (0 triples)>
 
 ;; (select (graph #{[1 2 3] [4 5 6]}) [nil nil nil])
 ;;   => #<Graph e9a62310-7238-1195-8101-7831c1bbb832 (2 triples)>    
