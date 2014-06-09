@@ -60,7 +60,7 @@
     (mapv word-triples coll)))
 
 
-(defn file-triples [filename]
+(defn word-file-triples [filename]
   (r/fold clojure.set/union clojure.set/union
     (mapv word-triples (words-from-file filename))))
 
@@ -86,7 +86,7 @@
   ([]
      (build-word-db! +default-corpus-file+))
   ([filename]
-     (set-word-db! (make-graph (file-triples filename)))
+     (set-word-db! (make-graph (word-file-triples filename)))
      @word-db))
 
 ;;;
