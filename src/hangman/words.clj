@@ -11,8 +11,6 @@
   (:use     [print.foo]))
 
 
-
-
 (def +default-corpus-file+ "resources/words.txt")
 
 
@@ -50,10 +48,8 @@
                  (list (list word c -1))
                  (map #(conj (list c %) word) posns)))))
          [(tuple word :length (count word))
-          (tuple word :type   :WORD)]
-         )))
+          (tuple word :type   :WORD)])))
 
-;; (word-triples "abccddd")
 
 (defn word-collection-triples [coll]
   (r/fold clojure.set/union clojure.set/union
@@ -64,13 +60,6 @@
   (r/fold clojure.set/union clojure.set/union
     (mapv word-triples (words-from-file filename))))
 
-;; (util/run-and-measure-timing 
-;;   (count (file-triples +default-corpus-file+)))
-;;
-;;  => {:response         4511728,
-;;      :start-time 1401197847802,
-;;      :end-time   1401197881150,
-;;      :time-taken         33348}
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Database Management
@@ -94,31 +83,19 @@
 ;; trivial to implement using the facilities we have created for parsing and
 ;; graph construction.  Primarily, these are responsible for atomic interaction
 ;; with global state, which is limited to only the single atom 'word-db'.
-;;
+;;;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Hangman Queries
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+(defn word-letters [w]
+  (into (sorted-set) (seq w)))
+
 (defn words-of-length [g length]
   (set (map s (query g nil :length length))))
 
-
-;; (util/run-and-measure-timing
-;;   (words-of-length @word-db 2))
-;;
-;;   =>  {:response #{"PE" "EN" "UH" "SI" "IT" "PI" "FA" "MY" "AM" "BI" "YO"
-;;     "MU" "LI" "NU" "AY" "AH" "IF" "HO" "AX" "OD" "NE" "ON" "OW" "EX" "ME"
-;;     "BO" "JO" "KA" "IS" "TA" "EH" "AT" "EL" "XU" "OY" "UP" "MM" "YE" "AN"
-;;     "MI" "UM" "PA" "UT" "GO" "BY" "XI" "MO" "AR" "AW" "TI" "ID" "BA" "TO"
-;;     "SH" "MA" "OE" "AD" "WO" "OM" "HE" "SO" "DO" "AL" "LA" "DE" "AS" "AA"
-;;     "NO" "ET" "AG" "BE" "OX" "OR" "EM" "ED" "WE" "US" "HA" "AB" "YA" "EF"
-;;     "RE" "IN" "ES" "OS" "UN" "LO" "HI" "ER" "AE" "HM" "AI" "OP" "OF" "OH"
-;;     "NA"},
-;;        :start-time 1401743282516,
-;;        :end-time   1401743282516,
-;;        :time-taken 0}
 
 (defn words-excluding-letter [g letter]
   (set (map s (query g nil letter -1))))
@@ -135,7 +112,7 @@
   (mapv s (query g nil :type :WORD)))
 
 (defn random-element [coll]
-  (nth coll (rand-int (count coll))))
+  (nth (vec coll) (rand-int (count coll))))
 
 (defn random-word [g]
   (random-element (all-words g)))
@@ -147,6 +124,55 @@
       (recur (conj words (random-element all)) all))))
 
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Letter Frequency Distribution
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn letter-frequency-distribution [words]
+  (with-local-vars [newspace (transient {})]
+    (doseq [w words]
+      (doseq [t (word-letters w)]
+        (var-set newspace 
+          (conj! (var-get newspace)
+            [t (inc (get (var-get newspace) t 0))]))))
+    (persistent! (var-get newspace))))
+
+
+(defn pp-letter-frequency-distribution
+  ([]      (pp-letter-frequency-distribution (all-words @word-db)))
+  ([words] (let [cols ["Term" "Words Occurred" "%"]
+                 tot  (count words)]
+             (pp/print-table cols
+               (map (partial zipmap cols)
+                 (sort-by second >
+                   (map #(conj % (pp/cl-format nil "~6,2f" (/ (second %)
+                                                             tot 0.01)))
+                     (seq (letter-frequency-distribution words)))))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Examples
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; (word-triples "abccddd")
+
+;; (util/run-and-measure-timing 
+;;   (count (word-file-triples +default-corpus-file+)))
+
+;; (util/run-and-measure-timing
+;;   (words-of-length @word-db 2))
+;;
+;;   =>  {:response #{"PE" "EN" "UH" "SI" "IT" "PI" "FA" "MY" "AM" "BI" "YO"
+;;     "MU" "LI" "NU" "AY" "AH" "IF" "HO" "AX" "OD" "NE" "ON" "OW" "EX" "ME"
+;;     "BO" "JO" "KA" "IS" "TA" "EH" "AT" "EL" "XU" "OY" "UP" "MM" "YE" "AN"
+;;     "MI" "UM" "PA" "UT" "GO" "BY" "XI" "MO" "AR" "AW" "TI" "ID" "BA" "TO"
+;;     "SH" "MA" "OE" "AD" "WO" "OM" "HE" "SO" "DO" "AL" "LA" "DE" "AS" "AA"
+;;     "NO" "ET" "AG" "BE" "OX" "OR" "EM" "ED" "WE" "US" "HA" "AB" "YA" "EF"
+;;     "RE" "IN" "ES" "OS" "UN" "LO" "HI" "ER" "AE" "HM" "AI" "OP" "OF" "OH"
+;;     "NA"},
+;;        :start-time 1401743282516,
+;;        :end-time   1401743282516,
+;;        :time-taken 0}
 
 
 ;; (util/run-and-measure-timing
@@ -208,4 +234,34 @@
 ;;      :time-taken 654}
 
 
-
+;; (util/run-and-measure-timing
+;;   (pp-letter-frequency-distribution))
+;;
+;; | Term | Words Occurred |      % |
+;; |------+----------------+--------|
+;; |    E |         121433 |  69.98 |
+;; |    S |         104351 |  60.13 |
+;; |    I |         102392 |  59.01 |
+;; |    A |          94264 |  54.32 |
+;; |    R |          91066 |  52.48 |
+;; |    N |          84485 |  48.69 |
+;; |    T |          83631 |  48.19 |
+;; |    O |          79663 |  45.91 |
+;; |    L |          68795 |  39.64 |
+;; |    C |          55344 |  31.89 |
+;; |    D |          47219 |  27.21 |
+;; |    U |          46733 |  26.93 |
+;; |    P |          40740 |  23.48 |
+;; |    M |          39869 |  22.98 |
+;; |    G |          38262 |  22.05 |
+;; |    H |          33656 |  19.40 |
+;; |    B |          26736 |  15.41 |
+;; |    Y |          24540 |  14.14 |
+;; |    F |          17358 |  10.00 |
+;; |    V |          14844 |   8.55 |
+;; |    K |          12757 |   7.35 |
+;; |    W |          11310 |   6.52 |
+;; |    Z |           7079 |   4.08 |
+;; |    X |           4607 |   2.65 |
+;; |    Q |           2541 |   1.46 |
+;; |    J |           2467 |   1.42 |
