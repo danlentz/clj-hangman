@@ -306,11 +306,22 @@ types of binary encoding:
       ----------
     = 328
 
-Finally, the complete triples representing the occurances of 'E' in
+Finally, the actual triples representing the occurances of 'E' in
 words "SOMEWHERE" and "EVERYWHERE":
 
     ["EVERYWHERE" \E 645]
     ["SOMEWHERE"  \E 328]
+
+There are two reasons why letter position is encoded this way, rather
+than just adding multiple triples (one for each occurance position) as
+shown in the simplified example above. First, it is beneficial for
+efficiency to be able to select all words with a given letter/position
+using only one query.  But, more importantly, this approach gives us
+the ability to implicitly exclude words where a given letter occurs in
+other positions _in addition_ to the ones specified.  That is, if we
+have the following game in progress:
+
+
 
 
 #### Hangman Queries
