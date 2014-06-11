@@ -276,14 +276,25 @@ supplied constituents of a query triple.
 
 ### Words
 
+At the most basic level, the computations performed by this hangman
+implementation are all powered by a triple-store indexed graph
+database. On top of this generic data architecture, though, the game
+of hangman decomposes nicely into an upper-level API for working with
+letters and words.
+
 
 #### Letter Occurances
 
-Occurances of a letter in a given word are represented by a bitmap
-indicating each position in which that letter is found. This allows
-all occurance positions to be encoded with a single, 64-bit integer,
-or, zero if the letter does not occur at all.  So, occurances of 'E'
-in "EVERYWHERE" would be represented as follows:
+
+The examples triple-store above is a simplified model used to
+illustrate the basic mechanics and operation of graph structure and
+indexing.  We will now examine the actual triples representation used
+to index the position of letter occurances for the words in the
+provided corpus.  Occurances of a letter in a given word are actually
+represented by a bitmap indicating each position in which that letter
+is found. This allows all occurance positions to be encoded with a
+single, 64-bit integer, or, zero if the letter does not occur at all.
+So, occurances of 'E' in "EVERYWHERE" would be represented as follows:
 
       EVERYWHERE <- word
       ..........
