@@ -303,7 +303,7 @@ types of binary encoding:
       .........
       000100101  <- reversed bits of position mask
       101001000  <- actual 
-      ----------
+      ---------
     = 328
 
 Finally, the actual triples representing the occurances of 'E' in
@@ -312,16 +312,40 @@ words "SOMEWHERE" and "EVERYWHERE":
     ["EVERYWHERE" \E 645]
     ["SOMEWHERE"  \E 328]
 
-There are two reasons why letter position is encoded this way, rather
-than just adding multiple triples (one for each occurance position) as
-shown in the simplified example above. First, it is beneficial for
-efficiency to be able to select all words with a given letter/position
-using only one query.  But, more importantly, this approach gives us
-the ability to implicitly exclude words where a given letter occurs in
-other positions _in addition_ to the ones specified.  That is, if we
-have the following game in progress:
+Why do we use this bitmap technique? There are two reasons why letter
+position is encoded this way, rather than just adding multiple triples
+(one for each occurance position) as shown in the simplified example
+above. First, it is beneficial for efficiency to be able to select all
+words with a given letter/position using only one query.  But, more
+importantly, this approach gives us the ability to implicitly exclude
+words where a given letter occurs in other positions _in addition_ to
+the ones specified.  That is, if we have the following game in
+progress:
 
+    _Y_Y__
 
+We are interested in possible solutions that contain 'Y' _only_ in the
+given positions since, by the rules of the game, all positions of a
+given letter will be revealed when that letter is guessed.  Therefore,
+we would like to exclude from consideration choices such as
+```SYZYGY``` which contain 'Y' at positions in addition to those
+displayed.  This is easily accomplished using the bitmap
+representation:
+
+    (word-letter-position-mask "_Y_Y__" \Y)
+      
+      => 10
+
+    (word-letter-position-mask "SYZYGY" \Y)
+
+      => 42
+
+Remembering that ```nil``` represents the wildcard, then using this
+approach, we may query very efficiently for all words with Y _only_ in
+the given positions.  We would simply query for all triples that
+match the following:
+
+    [nil  \Y  10]
 
 
 #### Hangman Queries
