@@ -5,13 +5,13 @@
   (:require [clojure.core.reducers :as r])
   (:require [clojure.tools.logging :as log])
   (:require [hangman.util  :as util])
-  (:require [hangman.bitop :as bitop])
+  (:use     [hangman.words])
   (:use     [hangman.util :only [returning returning-bind indexed]])
-  (:use     [hangman.corpus])
-  (:use     [hangman.inverted])
+  (:use     [hangman.triples])
   (:use     [hangman.game])
   (:use     [print.foo])
   (:import  [hangman.game LetterGuess WordGuess]))
+
 
 
 (definterface Strategem
@@ -19,43 +19,50 @@
   (updateStrategy [game guess]))
 
 
+(defmulti make-strategy (comp first vector))
+                          
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Longshot Strategy
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defrecord LongshotStrategy [posswords]
   Strategem
   (nextGuess [_ game]
     (->WordGuess
-      (nth posswords (rand-int (count posswords)))))
+      (random-element posswords)))
   (updateStrategy [_ game guess]
     (->LongshotStrategy
       (remove #(= % (:w guess)) posswords))))
-  
 
-
-(defmulti make-strategy (comp first vector))
-                          
 
 (defmethod make-strategy :longshot [name game]
   (->LongshotStrategy
-    (words-of-length *corpus* (.getSecretWordLength game))))
+    (words-of-length @word-db (.getSecretWordLength game))))
 
-(defn random-element [coll]
-  (nth (vec coll) (rand-int (count coll))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Random Letters Strategy
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defrecord RandomStrategy [posswords]
   Strategem
   (nextGuess [_ game]
     (if (= 1  (.numWrongGuessesRemaining game))
       (->WordGuess
-        (nth posswords (rand-int (count posswords))))
+        (random-element posswords))
       (->LetterGuess (random-element
                        (clojure.set/difference
-                         (set (all-terms)) 
+                         (all-letters)
                          (.getAllGuessedLetters game))))))
   (updateStrategy [_ game guess]
     (condp = (type guess)
       LetterGuess (if (get (.getIncorrectlyGuessedLetters game) (:ch guess))
                     (->RandomStrategy
-                      (words-excluding-terms
-                        posswords (:ch guess)))
+                      (clojure.set/intersection
+                        posswords
+                        (words-excluding
+                          @word-db (:ch guess))))
                     (->RandomStrategy
                       (words-including-term-positions
                         posswords
@@ -71,7 +78,7 @@
 
 (defmethod make-strategy :random [name game]
   (->RandomStrategy
-    (words-of-length *corpus* (.getSecretWordLength game))))
+    (words-of-length @word-db (.getSecretWordLength game))))
 
 
 
@@ -111,7 +118,7 @@
 
 (defmethod make-strategy :frequency [name game]
   (->FrequencyStrategy
-    (words-of-length *corpus* (.getSecretWordLength game))))
+    (words-of-length @word-db (.getSecretWordLength game))))
 
 
 

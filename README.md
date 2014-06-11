@@ -276,6 +276,57 @@ supplied constituents of a query triple.
 
 ### Words
 
+
+#### Letter Occurances
+
+#### Hangman Queries
+
+Strategies for the game of hangman can be coded using the coposition
+of the following types of queries: _word length_, _letters not
+present_, and _letter at position(s)_.  These are the types of
+information revealed to us during the course of a game.
+
+##### Length
+
+
+##### Exclusionary
+
+    (words-excluding @word-db \A \E \I \O \U)
+    
+    => #{"SCRY" "CRYPTS" "WHYS" "TSKTSKS" "NTH" "MYTH" "MY" "SYNC" "CWMS" 
+         "CYST" "XYSTS" "STY" "DRYS" "HMM" "HYPS" "GYP" "FLYBY" "FRY" "PSYCHS"
+         "SLYLY" "FLYBYS" "TRY" "HYMN" "SHH" "DRYLY" "GYPSY" "WHY" "WRYLY"
+         "XYST" "CRWTHS" "SYPHS" "SYNCH" "WYNDS" "RYND" "TSKTSK" "SHY" "MM"
+         "GLYCYL" "PHPHT" "STYMY" "WYCH" "SYLPHS" "SHYLY" "TRYST" "DRY" "CRY"
+         "SPRY" "MYRRH" "THY" "BY" "FLY" "MYTHY" "LYNX" "BYRLS" "CRYPT" "GHYLL"
+         "NYMPH" "GLYPH" "PHT" "SKY" "GYPS" "SYPH" "SYNTHS" "PYX" "THYMY"
+         "SH" "CWM" "GYM" "LYMPH" "LYMPHS" "GYMS" "TRYSTS" "BYRL" "SYNCHS"
+         "TYPPS" "PFFT" "WRY" "PYGMY" "WYN" "SYLPHY" "TYPP" "TSK" "SPRYLY"
+         "SYNTH" "RHYTHM" "SYN" "GLYPHS" "HYMNS" "NYMPHS" "TSKS" "TYPY" "WYNS"
+         "MYTHS" "BRR" "RHYTHMS" "BYS" "PSYCH" "MYRRHS" "SYNCS" "PRY" "WYNNS"
+         "CRWTH" "PLY" "WYNN" "BRRR" "RYNDS" "HM" "SLY" "GLYCYLS" "HYP" "GHYLLS"
+         "PSST" "SYZYGY" "XYLYLS" "SYLPH" "FLYSCH" "WYND" "SPY" "LYNCH" "CYSTS"
+         "XYLYL"}
+
+##### Positional
+
+
+    (words-with-letter-positions @word-db \E 1 3 5 7)
+    
+    => #{"TELEMETER" "SEVERENESS" "TELEMETERING" "BEJEWELED" "TELEMETERS"
+         "TEREBENES" "TEREBENE" "SERENENESS"}
+
+
+
+    (words-with-letter-positions @word-db \A 0 1)
+    
+    => #{"AAS" "AAHS" "AAL" "AARDWOLVES" "AAHED" "AALS" "AARDWOLF" "AAH"
+         "AASVOGELS" "AALII" "AAHING" "AA" "AALIIS" "AARRGHH" "AASVOGEL"
+         "AARGH" "AARRGH"}
+
+
+##### Letter Frequency Distribution
+
 The provided corpus includes words with the following distribution of
 lengths.
 

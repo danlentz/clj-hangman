@@ -33,22 +33,45 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Words/Letters
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn all-letters []
+  (into (sorted-set)
+    (map char (range (int \A) (inc (int \Z))))))
+
+(defn make-position-mask [& positions]
+  (if (empty? positions)
+    0
+    (apply bit-or
+      (conj (for [x positions]
+              (bit-shift-left 1 x)) 0))))
+  
+(defn word-letters [word]
+  (into (sorted-set) (seq word)))
+
+(defn letter-positions [word letter]
+  (for [i (range (count word))
+        :when (= letter (nth (seq word) i))]
+    i))
+
+(defn word-letter-position-mask [word letter]
+  (apply make-position-mask (letter-positions word letter)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Triples Generation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; TODO: this is somewhat ugly.
 
 (defn word-triples [word]
   (set (concat
-         (map #(apply tuple %)
-           (apply concat
-             (for [c (map char (range (int \A) (inc (int \Z))))
-                   :let [posns (util/positions #(= % c) word)]]
-               (if (empty? posns)
-                 (list (list word c -1))
-                 (map #(conj (list c %) word) posns)))))
+         (for [c (all-letters)]
+           (tuple word c (word-letter-position-mask word c)))
          [(tuple word :length (count word))
           (tuple word :type   :WORD)])))
+
+;; (word-triples "AABCD")
+;; (word-triples "SUPERCALIFRAGILISTICEXPIALIDOCIOUS")
 
 
 (defn word-collection-triples [coll]
@@ -90,24 +113,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defn word-letters [w]
-  (into (sorted-set) (seq w)))
-
 (defn words-of-length [g length]
   (set (map s (query g nil :length length))))
 
 
 (defn words-excluding-letter [g letter]
-  (set (map s (query g nil letter -1))))
+  (set (map s (query g nil letter 0))))
 
 (defn words-excluding [g & letters]
   (apply clojure.set/intersection 
     (filter identity
       (map (partial words-excluding-letter g) letters))))
 
-(defn words-with-letter-position [g letter position]
-  (set (map s (query g nil letter position))))
-
+(defn words-with-letter-positions [g letter position & more]
+  (set (map s (query g nil letter
+                (apply make-position-mask (conj more position))))))
+  
 (defn all-words [g]
   (mapv s (query g nil :type :WORD)))
 
@@ -232,6 +253,20 @@
 ;;      :start-time 1401748827035,
 ;;      :end-time 1401748827689,
 ;;      :time-taken 654}
+
+;; (word-letter-position-mask "A" \A)
+;; (word-letter-position-mask "B" \A)
+;; (word-letter-position-mask "AABBBCCCC" \A)
+;; (word-letter-position-mask "SOMETIMES" \E)
+
+;; (util/run-and-measure-timing
+;;   (clojure.set/intersection
+;;     (words-of-length @word-db 9)
+;;     (words-excluding @word-db \A \O \U)
+;;     (words-with-letter-positions @word-db \E 3 7)
+;;     (words-with-letter-position @word-db \U 1)
+;;     ))
+
 
 
 ;; (util/run-and-measure-timing
