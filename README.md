@@ -289,6 +289,18 @@ information revealed to us during the course of a game.
 ##### Length
 
 
+    (words-of-length @word-db 2))
+
+     => #{"PE" "EN" "UH" "SI" "IT" "PI" "FA" "MY" "AM" "BI" "YO" "NA" "OH"
+          "MU" "LI" "NU" "AY" "AH" "IF" "HO" "AX" "OD" "NE" "ON" "OW" "EX"
+          "BO" "JO" "KA" "IS" "TA" "EH" "AT" "EL" "XU" "OY" "UP" "MM" "YE"
+          "MI" "UM" "PA" "UT" "GO" "BY" "XI" "MO" "AR" "AW" "TI" "ID" "BA"
+          "SH" "MA" "OE" "AD" "WO" "OM" "HE" "SO" "DO" "AL" "LA" "DE" "AS"
+          "NO" "ET" "AG" "BE" "OX" "OR" "EM" "ED" "WE" "US" "HA" "AB" "YA"
+          "RE" "IN" "ES" "OS" "UN" "LO" "HI" "ER" "AE" "HM" "AI" "OP" "OF"
+          "AN" "TO" "AA" "EF" "ME"}
+
+
 ##### Exclusionary
 
     (words-excluding @word-db \A \E \I \O \U)
