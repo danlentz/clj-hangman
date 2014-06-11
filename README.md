@@ -279,6 +279,40 @@ supplied constituents of a query triple.
 
 #### Letter Occurances
 
+Occurances of a letter in a given word are represented by a bitmap
+indicating each position in which that letter is found. This allows
+all occurance positions to be encoded with a single, 64-bit integer,
+or, zero if the letter does not occur at all.  So, occurances of 'E'
+in "EVERYWHERE" would be represented as follows:
+
+      EVERYWHERE <- word
+      ..........
+      1010000101 <- actual 
+      ----------
+    = 645
+
+Now, the above example represents a special case because of the
+symmetry of the occurances of 'E'.  Because English words are read
+left-to-right, the most intuitive representation of 'position' should
+also count from left to right.  Therefore, the bits in the
+word-letter-position-mask are actually in reverse. This type of
+'endian-ness' should be familiar to those who have worked with other
+types of binary encoding:
+
+      SOMEWHERE  <- word
+      .........
+      000100101  <- reversed bits of position mask
+      101001000  <- actual 
+      ----------
+    = 328
+
+Finally, the complete triples representing the occurances of 'E' in
+words "SOMEWHERE" and "EVERYWHERE":
+
+    ["EVERYWHERE" \E 645]
+    ["SOMEWHERE"  \E 328]
+
+
 #### Hangman Queries
 
 Strategies for the game of hangman can be coded using the coposition
@@ -321,7 +355,7 @@ information revealed to us during the course of a game.
          "XYLYL"}
 
 So, composing _length_ and _exclusion_ we can easily narrow the set of
-possible solutions in a hypothetican game in which a two letter word
+possible solutions in a hypothetical game in which a two letter word
 contains no vowels:
 
 
