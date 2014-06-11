@@ -286,7 +286,7 @@ letters and words.
 #### Letter Occurances
 
 
-The examples triple-store above is a simplified model used to
+The example triple-store above is a simplified model used to
 illustrate the basic mechanics and operation of graph structure and
 indexing.  We will now examine the actual triples representation used
 to index the position of letter occurances for the words in the
@@ -325,13 +325,13 @@ words "SOMEWHERE" and "EVERYWHERE":
 
 Why do we use this bitmap technique? There are two reasons why letter
 position is encoded this way, rather than just adding multiple triples
-(one for each occurance position) as shown in the simplified example
-above. First, it is beneficial for efficiency to be able to select all
-words with a given letter/position using only one query.  But, more
-importantly, this approach gives us the ability to implicitly exclude
-words where a given letter occurs in other positions _in addition_ to
-the ones specified.  That is, if we have the following game in
-progress:
+(one for each occurance position) as shown in the simplified model
+initially presented. First, it is beneficial for efficiency to be able
+to select all words with a given letter/position using only one query.
+But, more importantly, this approach gives us the ability to
+implicitly exclude words where a given letter occurs in other
+positions _in addition_ to the ones specified.  That is, if we have
+the following game in progress:
 
     _Y_Y__
 
@@ -361,7 +361,7 @@ match the following:
 
 #### Hangman Queries
 
-Strategies for the game of hangman can be coded using the coposition
+Strategies for the game of hangman can be coded using the composition
 of the following types of queries: _word length_, _letters not
 present_, and _letter at position(s)_.  These are the types of
 information revealed to us during the course of a game.
