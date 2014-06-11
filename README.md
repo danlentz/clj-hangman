@@ -289,7 +289,7 @@ information revealed to us during the course of a game.
 ##### Length
 
 
-    (words-of-length @word-db 2))
+    (words-of-length @word-db 2)
 
      => #{"PE" "EN" "UH" "SI" "IT" "PI" "FA" "MY" "AM" "BI" "YO" "NA" "OH"
           "MU" "LI" "NU" "AY" "AH" "IF" "HO" "AX" "OD" "NE" "ON" "OW" "EX"
@@ -319,6 +319,18 @@ information revealed to us during the course of a game.
          "CRWTH" "PLY" "WYNN" "BRRR" "RYNDS" "HM" "SLY" "GLYCYLS" "HYP" "GHYLLS"
          "PSST" "SYZYGY" "XYLYLS" "SYLPH" "FLYSCH" "WYND" "SPY" "LYNCH" "CYSTS"
          "XYLYL"}
+
+So, composing _length_ and _exclusion_ we can easily narrow the set of
+possible solutions in a hypothetican game in which a two letter word
+contains no vowels:
+
+
+    (clojure.set/intersection
+      (words-of-length @word-db 2)
+      (words-excluding @word-db \A \E \I \O \U \Y))
+
+     => #{"MM" "SH" "HM"}
+
 
 ##### Positional
 
