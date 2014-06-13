@@ -280,16 +280,16 @@ At the most basic level, the computations performed by this hangman
 implementation are all powered by a triple-store indexed graph
 database. On top of this generic data architecture, though, the game
 of hangman decomposes nicely into an upper-level API for working with
-letters and words.  The word programmer interface is fully _referentially
-transparent_  and makes extensive use of memoization -- an optimization
-that ensures that no computation is performed twice.  After a function
-of given arguments is computed once, any subsequent call to that
-function with the same arguments is indexed and the result returned in
-negligible constant time.  Many parts of the word interface, like the
-rest of this implementation, also exploit the clojure _reducers_
-framework to provide efficient parallelism for many of the core
-computations that utilize as many cpu cores as supported on the
-underlying hardware.
+letters and words.  The word programmer interface is fully
+_referentially transparent_ and makes extensive use of memoization --
+an optimization that ensures that no computation is performed twice.
+After a function of given arguments is computed once, any subsequent
+call to that function with the same arguments will have been indexed
+and the result returned in negligible constant time.  Many parts of
+the word interface, like the rest of this implementation, also exploit
+the clojure _reducers_ framework to provide efficient parallelism for
+many of the core computations that utilize as many cpu cores as
+supported on the underlying hardware.
 
 
 #### Letter Occurances
