@@ -438,7 +438,13 @@ contains no vowels:
          "AARGH" "AARRGH"}
 
 
-##### Letter Frequency Distribution
+### Strategy
+
+#### Longshot Word Guessing Strategy
+
+#### Random Letter Guessing Strategy
+
+#### Letter Frequency Derived Guessing Strategy
 
 
 
@@ -486,9 +492,6 @@ lengths.
 
 
 
-
-
-### Strategy
 
 ### Game
 
