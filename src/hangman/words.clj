@@ -101,6 +101,12 @@
      (set-word-db! (make-graph (word-file-triples filename)))
      @word-db))
 
+(defn ensure-word-db
+  ([]
+     (ensure-word-db +default-corpus-file+))
+  ([filename]
+     (or @word-db (build-word-db! +default-corpus-file+))))
+  
 ;;;
 ;;  These are the actual "top-level" database API functions which are pleasantly
 ;; trivial to implement using the facilities we have created for parsing and
@@ -113,24 +119,38 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defn words-of-length [g length]
+(defn- -words-of-length [g length]
   (set (map s (query g nil :length length))))
 
+(def words-of-length (memoize -words-of-length)) 
 
-(defn words-excluding-letter [g letter]
+
+(defn- -words-excluding-letter [g letter]
   (set (map s (query g nil letter 0))))
 
-(defn words-excluding [g & letters]
+(def words-excluding-letter (memoize -words-excluding-letter))
+
+
+(defn- -words-excluding [g & letters]
   (apply clojure.set/intersection 
     (filter identity
       (map (partial words-excluding-letter g) letters))))
 
-(defn words-with-letter-positions [g letter position & more]
+(def words-excluding (memoize -words-excluding))
+
+
+(defn- -words-with-letter-positions [g letter position & more]
   (set (map s (query g nil letter
                 (apply make-position-mask (conj more position))))))
+
+(def words-with-letter-positions (memoize -words-with-letter-positions))
+
   
-(defn all-words [g]
+(defn- -all-words [g]
   (mapv s (query g nil :type :WORD)))
+
+(def all-words (memoize -all-words))
+
 
 (defn random-element [coll]
   (nth (vec coll) (rand-int (count coll))))
@@ -150,7 +170,7 @@
 ;; Letter Frequency Distribution
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn letter-frequency-distribution [words]
+(defn- -letter-frequency-distribution [words]
   (with-local-vars [newspace (transient {})]
     (doseq [w words]
       (doseq [t (word-letters w)]
@@ -158,6 +178,8 @@
           (conj! (var-get newspace)
             [t (inc (get (var-get newspace) t 0))]))))
     (persistent! (var-get newspace))))
+
+(def letter-frequency-distribution (memoize -letter-frequency-distribution))
 
 
 (defn pp-letter-frequency-distribution
@@ -204,6 +226,14 @@
 
 ;; (util/run-and-measure-timing
 ;;   (words-excluding @word-db \A ))
+
+;; (clojure.set/intersection
+;;   (words-of-length @word-db 2)
+;;   (words-excluding @word-db \A \E \I \O \U))
+;;
+;;  => #{"MY" "MM" "BY" "SH" "HM"}
+
+
 
 ;; (util/run-and-measure-timing
 ;;   (clojure.set/intersection
@@ -300,3 +330,16 @@
 ;; |    X |           4607 |   2.65 |
 ;; |    Q |           2541 |   1.46 |
 ;; |    J |           2467 |   1.42 |
+
+
+;; (word-letter-position-mask "EVERYWHERE" \E)
+;; (word-letter-position-mask "SOMEWHERE" \E)
+
+;; (pp/cl-format *out* "~b" 328)
+
+;; (word-letter-position-mask "_Y_Y_Y" \Y)
+
+;; (util/run-and-measure-timing
+;;   (all-words @word-db))
+
+;; (count (all-words @word-db))

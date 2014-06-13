@@ -1,14 +1,9 @@
 (ns hangman
   (:refer-clojure :exclude [])
   (:require [clojure.pprint :as pp])
-  (:require [clojure.string :as str])
-  (:require [clojure.core.reducers :as r])
-  (:require [clojure.tools.logging :as log])
   (:require [hangman.util  :as util])
-  (:require [hangman.bitop :as bitop])
   (:use     [hangman.util :only [returning returning-bind indexed]])
-  (:use     [hangman.corpus])
-  (:use     [hangman.inverted])
+  (:use     [hangman.words])
   (:use     [hangman.game])
   (:use     [hangman.strategy])
   (:use     [print.foo]))
@@ -18,35 +13,36 @@
 (defn play
   ([strategy-name] (play strategy-name 1))
   ([strategy-name iter]
-     (with-corpus []
-       (apply +
-         (repeatedly iter
-           #(.currentScore 
-              (loop [g (new-game (random-word *corpus*) 5)
-                     s (make-strategy strategy-name g)]
-                (if-not (= :keep-guessing (.gameStatus g))
-                  g
-                  (let [x (.nextGuess s g)]
-                    (prn g)
+     (ensure-word-db +default-corpus-file+)
+     (apply +
+       (repeatedly iter
+         #(.currentScore 
+            (loop [game     (new-game (random-word @word-db) 5)
+                   strategy (make-strategy strategy-name game)]
+                (if-not (= :keep-guessing (.gameStatus game))
+                  game
+                  (let [x (.nextGuess strategy game)]
+                    (prn game)
                     (prn x)
-                    (.makeGuess x g)
-                    (prn g)
+                    (.makeGuess x game)
+                    (prn game)
                     (prn)
-                    (recur g (.updateStrategy s g x)))))))))))
+                    (recur game (.updateStrategy strategy game x))))))))))
 
 
-;; (util/with-timing (play :frequency 1000))
-;;  => [9402 2432927.496]
-
-;; (util/with-timing (play :frequency 1000))
-;;  => [8763 2760980.378]
 
 
-;; (apply + (repeatedly 1000
-;;            #(.currentScore (play :random))))
-;;  => 22698
+;; (util/run-and-measure-timing
+;;   (play :longshot 1000))
 
-;; (apply + (repeatedly 1000
-;;            #(.currentScore (play :longshot))))
-;;  => 24952
+;; (util/run-and-measure-timing
+;;   (play :random 1000))
 
+
+;; (util/run-and-measure-timing
+;;   (play :frequency 1000))
+;;
+;;  => {:response   7767,
+;;      :start-time 1402620872542,
+;;      :end-time   1402620887812,
+;;      :time-taken 15270}
