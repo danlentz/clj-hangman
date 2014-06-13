@@ -2,7 +2,7 @@
   (:refer-clojure :exclude [])
   (:require [clojure.pprint :as pp])
   (:require [hangman.util  :as util])
-  (:use     [hangman.util :only [returning returning-bind indexed]])
+  (:use     [hangman.util :only [returning-bind]])
   (:use     [hangman.words])
   (:use     [hangman.game])
   (:use     [hangman.strategy])
@@ -16,20 +16,21 @@
      (println "Initializing...")
      (ensure-word-db +default-corpus-file+)
      (println "Playing.")
-     (apply +
-       (repeatedly iter
-         #(.currentScore 
-            (loop [game     (new-game (random-word @word-db) 5)
-                   strategy (make-strategy strategy-name game)]
-                (if-not (= :keep-guessing (.gameStatus game))
-                  game
-                  (let [x (.nextGuess strategy game)]
-                    (prn game)
-                    (prn x)
-                    (.makeGuess x game)
-                    (prn game)
-                    (prn)
-                    (recur game (.updateStrategy strategy game x))))))))))
+     (returning-bind
+       [score (apply +
+                (repeatedly iter
+                  #(.currentScore 
+                     (loop [game     (new-game (random-word @word-db) 5)
+                            strategy (make-strategy strategy-name game)]
+                       (prn game)
+                       (if-not (= :keep-guessing (.gameStatus game))
+                         game
+                         (let [x (.nextGuess strategy game)]
+                           (prn x)
+                           (.makeGuess x game)
+                           (recur game
+                             (.updateStrategy strategy game x))))))))]
+       (println "Final Score: " score))))
 
 
 
