@@ -306,7 +306,7 @@ single, 64-bit integer, or, zero if the letter does not occur at all.
 So, occurances of 'E' in "EVERYWHERE" would be represented as follows:
 
       EVERYWHERE <- word
-      ..........
+      E.E....E.E <- occurances
       1010000101 <- actual 
       ----------
     = 645
@@ -320,9 +320,9 @@ word-letter-position-mask are actually in reverse. This type of
 types of binary encoding:
 
       SOMEWHERE  <- word
-      .........
-      000100101  <- reversed bits of position mask
-      101001000  <- actual 
+      ...E..E.E  <- occurances
+      000100101  <- actual
+      101001000  <- reversed 
       ---------
     = 328
 
