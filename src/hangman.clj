@@ -13,7 +13,9 @@
 (defn play
   ([strategy-name] (play strategy-name 1))
   ([strategy-name iter]
+     (println "Initializing...")
      (ensure-word-db +default-corpus-file+)
+     (println "Playing.")
      (apply +
        (repeatedly iter
          #(.currentScore 
