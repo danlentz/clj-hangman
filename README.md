@@ -280,7 +280,7 @@ At the most basic level, the computations performed by this hangman
 implementation are all powered by a triple-store indexed graph
 database. On top of this generic data architecture, though, the game
 of hangman decomposes nicely into an upper-level API for working with
-letters and words.  The word programmer fully _referentially
+letters and words.  The word programmer interface is fully _referentially
 transparent_  and makes extensive use of memoization -- an optimization
 that ensures that no computation is performed twice.  After a function
 of given arguments is computed once, any subsequent call to that
