@@ -1,14 +1,10 @@
 (ns hangman.triples
   (:refer-clojure :exclude [])
   (:require [clojure.pprint :as pp])
-  (:require [clojure.string :as str])
   (:require [clojure.core.reducers :as r])
-  (:require [clojure.tools.logging :as log])
   (:require [hangman.util  :as util])
   (:require [clj-uuid :as uuid])
-  (:use     [clj-tuple])
-  (:use     [print.foo]))
-
+  (:use     [clj-tuple]))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -16,6 +12,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def db (atom {}))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Tuple Constituent Accessors
@@ -49,8 +46,9 @@
   (assert (= (count triple) 3))
   triple)
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Graph Constructors
+;; Graph 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defrecord Graph [id indices triples])
@@ -77,17 +75,6 @@
   (.write w " triples)>"))
 
 
-;; (defn make-index [triples key1 key2 key3]
-;;   (reduce (fn [i0 triple]
-;;             (let [i1 (or (i0 (key1 triple)) {})
-;;                   i2 (or (i1 (key2 triple)) #{})]
-;;               (assoc i0
-;;                 (key1 triple)
-;;                 (assoc i1
-;;                   (key2 triple)
-;;                   (conj i2 (key3 triple))))))
-;;     {} triples))
-
 (defn make-index [triples key1 key2 key3]
   (reduce (fn [i0 triple]
             (let [i1 (or (i0 (key1 triple)) {})
@@ -100,6 +87,24 @@
                     (key3 triple)
                     triple)))))
     {} triples))
+
+
+;;;;
+;;; The following index implementation creates a set for the innermost
+;;; index rather than a map.  It is included for reference and is not
+;;; currently in use. 
+;;;;
+
+;; (defn make-index [triples key1 key2 key3]
+;;   (reduce (fn [i0 triple]
+;;             (let [i1 (or (i0 (key1 triple)) {})
+;;                   i2 (or (i1 (key2 triple)) #{})]
+;;               (assoc i0
+;;                 (key1 triple)
+;;                 (assoc i1
+;;                   (key2 triple)
+;;                   (conj i2 (key3 triple))))))
+;;     {} triples))
 
 
 (defn add-index [g key1 key2 key3]
@@ -158,13 +163,17 @@
       (id x)
       (util/returning (id g)
         (swap! db #(into % [[(id g) g] [(triples g) g]]))))))
-
   
 (def ^{:dynamic true} *context* (intern-graph (graph nil)))
 
 (extend-type java.util.UUID GraphBuilder
              (graph [this]
                (get @db this)))
+
+(defmacro with-context [designator & body]
+  `(binding [*context* (intern-graph (graph ~designator))]
+     ~@body))
+
 
 ;; (assert (= (graph *context*) (graph nil) (graph uuid/+null+)))
 
@@ -181,13 +190,9 @@
 ;;  => #<Graph 6d863860-723d-1195-8101-7831c1bbb832 (1 triples)>
 ;;  => #<Graph 6d863860-723d-1195-8101-7831c1bbb832 (1 triples)>
 
-(defmacro with-context [designator & body]
-  `(binding [*context* (intern-graph (graph ~designator))]
-     ~@body))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Indexed Database Query
+;; Indexed Graph Query
 ;;
 ;; Implememnted as a multifunction rather than protocol to allow modular
 ;; separation of implmentation based on supplied constituents of query.
@@ -249,7 +254,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; SELECT (Context-Aware Query)
+;; SELECT (Context-Aware Graph Query)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defprotocol GraphQuery
