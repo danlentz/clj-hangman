@@ -90,6 +90,29 @@
 
 
 ;;;;
+;;; The following index implementation exploits clojure reducers
+;;; concurrency.  It is included for reference and is not
+;;; currently in use because in practice it provides no gains
+;;; in performance
+;;;;
+
+;; (defn make-index [triples key1 key2 key3]
+;;   (r/fold util/rmerge (fn
+;;                         ([] {})
+;;                         ([i0 triple]
+;;                            (let [i0 (or i0 {})
+;;                                  i1 (or (i0 (key1 triple)) {})
+;;                                  i2 (or (i1 (key2 triple)) {})]
+;;                              (assoc i0
+;;                                (key1 triple)
+;;                                (assoc i1
+;;                                  (key2 triple)
+;;                                  (assoc i2
+;;                                    (key3 triple)
+;;                                    triple))))))
+;;     triples))
+
+;;;;
 ;;; The following index implementation creates a set for the innermost
 ;;; index rather than a map.  It is included for reference and is not
 ;;; currently in use. 
