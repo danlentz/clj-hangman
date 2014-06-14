@@ -92,7 +92,7 @@
   (swap! word-db (constantly graph)))
 
 (defn clear-word-db! []
-  (set-graph! nil))
+  (set-word-db! nil))
 
 (defn build-word-db!
   ([]
@@ -197,7 +197,12 @@
 ;; Examples
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; (word-triples "abccddd")
+;; (word-triples "ABCCDDD")
+
+;; (make-index (word-triples "ABCCDDD") s p o)
+
+;; (util/run-and-measure-timing
+;;   (build-word-db!))
 
 ;; (util/run-and-measure-timing 
 ;;   (count (word-file-triples +default-corpus-file+)))
