@@ -44,11 +44,11 @@ The pseudocode for a ```HangmanGame``` is:
 A trivial strategy might be to guess 'A', then 'B', then 'C',
 etc. until you've guessed every letter in the word (this will work
 great for "cab"!) or you've lost.  For example, let's say the word
-is _FACTUAL_.  Here is what a series of calls might look like:
+is _ACTUAL_.  Here is what a series of calls might look like:
 
 
-    // secret word is factual, 4 wrong guesses are allowed
-    HangmanGame game = new HangmanGame("factual", 4); 
+    // secret word is actual, 4 wrong guesses are allowed
+    HangmanGame game = new HangmanGame("actual", 4); 
 	System.out.println(game);
 	new GuessLetter('a').makeGuess(game);
 	System.out.println(game);
@@ -60,19 +60,19 @@ is _FACTUAL_.  Here is what a series of calls might look like:
 	System.out.println(game);
 	new GuessLetter('l').makeGuess(game);
 	System.out.println(game);
-	new GuessWord("factual").makeGuess(game);
+	new GuessWord("actual").makeGuess(game);
 	System.out.println(game);
 
 
 The output would be:
 
-	-------; score=0; status=KEEP_GUESSING
-	-A---A-; score=1; status=KEEP_GUESSING
-	-A---A-; score=2; status=KEEP_GUESSING
-	-A---A-; score=3; status=KEEP_GUESSING
-	-A--UA-; score=4; status=KEEP_GUESSING
-	-A--UAL; score=5; status=KEEP_GUESSING
-	FACTUAL; score=5; status=GAME_WON
+	------; score=0; status=KEEP_GUESSING
+	A---A-; score=1; status=KEEP_GUESSING
+	A---A-; score=2; status=KEEP_GUESSING
+	A---A-; score=3; status=KEEP_GUESSING
+	A--UA-; score=4; status=KEEP_GUESSING
+	A--UAL; score=5; status=KEEP_GUESSING
+	ACTUAL; score=5; status=GAME_WON
 
 ```game.score()``` would be 5 in this case since there were 4 letter guesses
 and 1 incorrect word guess made.
