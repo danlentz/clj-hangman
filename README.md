@@ -17,7 +17,7 @@ guessed correctly.
 The goal is to use a provided API to play Hangman effectively and
 efficiently. In particular, it is important to implement a modular
 design that will accomodate "pluggable" strategies in order to support
-comparitive exploration of various computer models that play the game
+comparative exploration of various computer models that play the game
 autonomously. Every word will be an entry found in a given text
 file database of all possible words, ```words.txt```.
 
